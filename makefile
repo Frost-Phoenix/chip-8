@@ -19,7 +19,7 @@ TARGET := app
 
 .PHONY: all debug release run install uninstall clean
 
-all: debug
+all: run
 
 # Build rule
 $(BIN_DIR)/$(TARGET): $(OBJ_FILES)
