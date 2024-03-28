@@ -11,7 +11,7 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 CC := gcc
-CFLAGS := -std=$(CSTD) -Wall -Wextra # -Werror
+CFLAGS := -std=$(CSTD) -Wall -Wextra -Werror
 LIBS   = -lSDL2
 DEBUG_FLAGS := -fsanitize=address,undefined
 
