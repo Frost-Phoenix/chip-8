@@ -4,16 +4,17 @@
 #include <stdint.h>
 
 #include "common.h"
-#include "rom.h"
 
 
-#define MEMORY_SIZE 4096
-#define NB_REGISTER   16
-#define STACK_SIZE    16
+#define MEMORY_SIZE    4096
+#define ROM_START_ADR 0x200
+
+#define NB_REGISTER 16
+#define STACK_SIZE  16
 
 
 typedef struct cpu {
-    uint8_t V[NB_REGISTER];                 /* general purpose registers */
+    uint8_t Vx[NB_REGISTER];                /* general purpose registers */
     uint8_t DT, ST;                         /* delay and sound timer */
     uint16_t I;                             /* register that usualy stores memoty adresses */
 
@@ -26,8 +27,6 @@ typedef struct chip8 {
     cpu_t cpu;
     uint8_t memory[MEMORY_SIZE];
     uint8_t display[WIN_WIDTH * WIN_HEIGHT];
-
-    rom_t* rom;
 } chip8_t;
 
 
