@@ -1,0 +1,11 @@
+=> command line argumment parsing:
+	-> -u --usage		(print usage)
+	-> -h --help		(print help)
+	-> -r --rom 		(defaut argument)
+	-> -s --scale 		(set window scale)
+	-> -d --debug 		(show debug information)
+
+=> Rendering 
+	-> SDL2
+	-> CLI
+	
