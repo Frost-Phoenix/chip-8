@@ -13,5 +13,6 @@
 	-> CLI
 
 => debug (in CLI)
+	-> stop, steb-by-step
 	-> show all register (Vx DT ST I SP PC) + stack content
 	-> show dilsplay in terminal
