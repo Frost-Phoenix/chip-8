@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 
+
 rom_t* rom_loader(const char* path) {
     FILE* file;
     rom_t* rom;

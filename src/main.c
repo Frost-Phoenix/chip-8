@@ -1,15 +1,14 @@
 #include <stdio.h>
 
-#include "rom.h"
+#include "chip8.h"
 
 
 int main() {
     puts("chip-8");
 
-    rom_t* rom = rom_loader("rom/test/2-ibm-logo.ch8");
-    rom_print_data(rom);
+    chip8_t* chip8 = chip8_init("rom/test/2-ibm-logo.ch8");
 
-    rom_free(rom);
+    chip8_quit(chip8);
 
     return EXIT_SUCCESS;
 }

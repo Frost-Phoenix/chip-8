@@ -1,4 +1,4 @@
-#ifndef ROM_H
+#if !defined(ROM_H)
 #define ROM_H
 
 #include <stdint.h>
@@ -9,7 +9,6 @@ typedef struct rom {
     uint8_t* data;
     size_t len;
 } rom_t;
-
 
 
 rom_t* rom_loader(const char* path);
