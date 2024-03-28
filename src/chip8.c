@@ -58,7 +58,7 @@ static void priv_load_rom(chip8_t* chip8, const char* path) {
  *                 Public functions                   *
  ******************************************************/
 
-chip8_t* chip8_init(const char* rom_path) {
+chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode) {
     chip8_t* chip8;
 
     chip8 = calloc(1, sizeof(chip8_t));
@@ -68,10 +68,19 @@ chip8_t* chip8_init(const char* rom_path) {
     }
 
     priv_load_rom(chip8, rom_path);
+    chip8->rendering_mode = mode;
+
+    if (mode == DEBUG) {
+        cli_init();
+    }
 
     return chip8;
 }
 
 void chip8_quit(chip8_t* chip8) {
+    if (chip8->rendering_mode == CLI || chip8->rendering_mode == DEBUG) {
+        cli_quit();
+    }
+
     free(chip8);
 }

@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "cli.h"
 
 
 #define MEMORY_SIZE    4096
@@ -12,6 +13,12 @@
 #define NB_REGISTER 16
 #define STACK_SIZE  16
 
+
+typedef enum {
+    CLI,
+    GUI,
+    DEBUG,
+} rendering_mode_t;
 
 typedef struct cpu {
     uint8_t Vx[NB_REGISTER];                /* general purpose registers */
@@ -27,12 +34,12 @@ typedef struct chip8 {
     cpu_t cpu;
     uint8_t memory[MEMORY_SIZE];
     uint8_t display[WIN_WIDTH * WIN_HEIGHT];
+
+    rendering_mode_t rendering_mode;
 } chip8_t;
 
 
-
-chip8_t* chip8_init(const char* rom_path);
-
+chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode);
 void chip8_quit(chip8_t* chip8);
 
 
