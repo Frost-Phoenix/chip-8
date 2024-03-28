@@ -1,9 +1,12 @@
 => command line argumment parsing:
-	-> -u --usage		(print usage)
-	-> -h --help		(print help)
-	-> -r --rom 		(defaut argument)
-	-> -s --scale 		(set window scale)
-	-> -d --debug 		(show debug information)
+	-> -u --usage			(print usage)
+	-> -h --help			(print help)
+	-> -r --rom [path]		(defaut argument)
+	-> --gui				(use GUI window, default)
+	-> --cli				(display in the terminal)
+	-> -s --scale [amount]	(set window scale, GUI only)
+	-> -g --grid 			(show pixel gird, GUI only)
+	-> -d --debug 			(show debug information)
 
 => Rendering 
 	-> SDL2
