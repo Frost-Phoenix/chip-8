@@ -118,6 +118,8 @@ static void priv_clear_display(uint8_t* display) {
 }
 
 static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
+    uint8_t flag;
+
     switch (n) {
         case 0x0:                                                               /* LD Vx, Vy */
             chip8->cpu.V[X] = chip8->cpu.V[Y];
@@ -131,26 +133,31 @@ static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
         case 0x3:                                                               /* XOR Vx, Vy */
             chip8->cpu.V[X] ^= chip8->cpu.V[Y];
             break;
-        case 0x4:                                                               /* ADD Vx, Vy */
+        case 0x4: {                                                               /* ADD Vx, Vy */
             uint16_t res = chip8->cpu.V[X] + chip8->cpu.V[Y];
-            chip8->cpu.V[0xF] = res >> 4;
             chip8->cpu.V[X] = res & 0xFF;
+            chip8->cpu.V[0xF] = res > 0xFF;
             break;
+        }
         case 0x5:                                                               /* SUB Vx, Vy */
-            chip8->cpu.V[0xF] = chip8->cpu.V[X] > chip8->cpu.V[Y];
+            flag = chip8->cpu.V[X] >= chip8->cpu.V[Y];
             chip8->cpu.V[X] -= chip8->cpu.V[Y];
+            chip8->cpu.V[0xF] = flag;
             break;
         case 0x6:                                                               /* SHR Vx {, Vy} */
-            chip8->cpu.V[0xF] = chip8->cpu.V[X] & 0x01;
+            flag = chip8->cpu.V[X] & 0x01;
             chip8->cpu.V[X] >>= 1;
+            chip8->cpu.V[0xF] = flag;
             break;
         case 0x7:                                                               /* SUBN Vx, Vy */
-            chip8->cpu.V[0xF] = chip8->cpu.V[Y] > chip8->cpu.V[X];
+            flag = chip8->cpu.V[Y] >= chip8->cpu.V[X];
             chip8->cpu.V[X] = chip8->cpu.V[Y] - chip8->cpu.V[X];
+            chip8->cpu.V[0xF] = flag;
             break;
         case 0xE:                                                               /* SHL Vx {, Vy} */
-            chip8->cpu.V[0xF] = (chip8->cpu.V[X] >> 3) & 0x01;
+            flag = (chip8->cpu.V[X] >> 3) & 0x01;
             chip8->cpu.V[X] <<= 1;
+            chip8->cpu.V[0xF] = flag;
             break;
         default:
             break;
