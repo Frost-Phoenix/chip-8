@@ -7,6 +7,7 @@
 #include <string.h>
 #include <signal.h>
 #include <time.h>
+#include <unistd.h>
 
 
 const uint8_t font[FONT_SIZE] = {
@@ -32,6 +33,15 @@ const uint8_t font[FONT_SIZE] = {
 /******************************************************
  *                 Private functions                  *
  ******************************************************/
+
+static void priv_load_rom(chip8_t* chip8, const char* path);
+static void priv_signal_callback_handler();
+static void priv_update_based_on_fps(double* last_update_time, const double target_fps, void (*update)(chip8_t*), chip8_t* chip8);
+static void priv_update_timers(chip8_t* chip8);
+static void priv_clear_display(uint8_t* display);
+static void priv_update(chip8_t* chip8);
+static void priv_render(chip8_t* chip8);
+
 
 static void priv_load_rom(chip8_t* chip8, const char* path) {
     FILE* file;
@@ -103,13 +113,82 @@ static void priv_update_timers(chip8_t* chip8) {
     }
 }
 
-static void priv_update(chip8_t* chip8) {
-    chip8->cpu.SP = 0;
+static void priv_clear_display(uint8_t* display) {
+    memset(display, 0, WIN_WIDTH * WIN_HEIGHT);
 }
 
-// static void priv_render(chip8_t* chip8) {               /* execute when display is modified */
+static void priv_update(chip8_t* chip8) {
+    uint16_t opcode, addr;
+    uint8_t n, X, Y, kk;
 
-// }
+    opcode = (chip8->memory[chip8->cpu.PC] << 8) | (chip8->memory[chip8->cpu.PC + 1]);
+    chip8->cpu.PC += 2;
+
+    addr = opcode & 0x0fff;
+    X = (opcode & 0x0f00) >> 8;
+    Y = (opcode & 0x00f0) >> 4;
+    n = opcode & 0x000f;
+    kk = opcode & 0x00ff;
+
+    switch (opcode & 0xf000) {
+        case 0x0000:
+            if (opcode == 0x00E0) {
+                priv_clear_display(chip8->display);
+            }
+            break;
+        case 0x1000:
+            chip8->cpu.PC = addr;
+            break;
+        case 0x6000:
+            chip8->cpu.VX[X] = kk;
+            break;
+        case 0x7000:
+            chip8->cpu.VX[X] += kk;
+            break;
+        case 0xA000:
+            chip8->cpu.I = addr;
+            break;
+        case 0xD000: {
+            uint8_t x, y;
+
+            x = chip8->cpu.VX[X] % WIN_WIDTH;
+            y = chip8->cpu.VX[Y] % WIN_HEIGHT;
+            chip8->cpu.VX[0xF] = 0;
+
+            for (size_t i = 0; i < n; ++i) {
+                if (y >= WIN_HEIGHT) { break; }
+
+                uint8_t byte = chip8->memory[chip8->cpu.I + i];
+                for (size_t j = 0; j < 8; ++j) {
+                    if (x + j >= WIN_WIDTH) { break; }
+
+                    size_t pos = y * WIN_WIDTH + (x + j);
+                    uint8_t pixel = (byte >> (7 - j)) & 1;
+
+                    if (pixel == 1 && chip8->display[pos] == 1) {
+                        chip8->cpu.VX[0xF] = 1;
+                    }
+
+                    chip8->display[pos] ^= pixel;
+                }
+                ++y;
+            }
+
+            priv_render(chip8);
+            break;
+        }
+        default:
+            printf("%04X\n", opcode);
+            exit(EXIT_FAILURE);
+            break;
+    }
+}
+
+static void priv_render(chip8_t* chip8) {               /* execute when display is modified */
+    if (chip8->rendering_mode == CLI || chip8->rendering_mode == DEBUG) {
+        cli_print_display(chip8->display);
+    }
+}
 
 
 /******************************************************
@@ -126,6 +205,7 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode) {
     }
 
     priv_load_rom(chip8, rom_path);
+    chip8->cpu.PC = 0x200;
     chip8->rendering_mode = mode;
     memcpy(chip8->memory + FONT_START_ARD, font, FONT_SIZE);
 

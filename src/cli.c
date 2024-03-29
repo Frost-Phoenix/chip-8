@@ -105,6 +105,7 @@ static void priv_display_cpu(const chip8_t* chip8) {
 
     MOVE_CURSOR(27, 45); printf("┃                 ┃");
     MOVE_CURSOR(28, 45); printf("┗━━━━━━━━━━━━━━━━━┛");
+    RESET_FORMATING();
 }
 
 
