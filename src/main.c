@@ -7,7 +7,7 @@
 int main() {
     puts("chip-8");
 
-    chip8_t* chip8 = chip8_init("rom/test/2-ibm-logo.ch8", DEBUG);
+    chip8_t* chip8 = chip8_init("rom/test/3-corax+.ch8", DEBUG);
     chip8_main_loop(chip8);
     chip8_quit(chip8);
 

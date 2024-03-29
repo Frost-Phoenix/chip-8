@@ -26,7 +26,7 @@ typedef enum {
 } rendering_mode_t;
 
 typedef struct cpu {
-    uint8_t VX[NB_REGISTER];                /* general purpose registers */
+    uint8_t V[NB_REGISTER];                /* general purpose registers */
     uint8_t DT, ST;                         /* delay and sound timer */
     uint16_t I;                             /* register that usualy stores memoty adresses */
 

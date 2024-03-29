@@ -51,7 +51,7 @@ static void priv_display_VX_registers(const chip8_t* chip8) {
     for (size_t i = 0; i < STACK_SIZE; ++i) {
         MOVE_CURSOR(22 + STACK_SIZE - (int)i - 1, 6);
         SET_TEXT_COLOR(color); printf("┃  "); RESET_FORMATING();
-        printf("V%1lX ", i); PRINT_DIMED("->"); printf(" 0x%02X", chip8->cpu.VX[i]);
+        printf("V%1lX ", i); PRINT_DIMED("->"); printf(" 0x%02X", chip8->cpu.V[i]);
         SET_TEXT_COLOR(color); printf("  ┃");
     }
 

@@ -117,6 +117,100 @@ static void priv_clear_display(uint8_t* display) {
     memset(display, 0, WIN_WIDTH * WIN_HEIGHT);
 }
 
+static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
+    switch (n) {
+        case 0x0:                                                               /* LD Vx, Vy */
+            chip8->cpu.V[X] = chip8->cpu.V[Y];
+            break;
+        case 0x1:                                                               /* OR Vx, Vy */
+            chip8->cpu.V[X] |= chip8->cpu.V[Y];
+            break;
+        case 0x2:                                                               /* AND Vx, Vy */
+            chip8->cpu.V[X] &= chip8->cpu.V[Y];
+            break;
+        case 0x3:                                                               /* XOR Vx, Vy */
+            chip8->cpu.V[X] ^= chip8->cpu.V[Y];
+            break;
+        case 0x4:                                                               /* ADD Vx, Vy */
+            uint16_t res = chip8->cpu.V[X] + chip8->cpu.V[Y];
+            chip8->cpu.V[0xF] = res >> 4;
+            chip8->cpu.V[X] = res & 0xFF;
+            break;
+        case 0x5:                                                               /* SUB Vx, Vy */
+            chip8->cpu.V[0xF] = chip8->cpu.V[X] > chip8->cpu.V[Y];
+            chip8->cpu.V[X] -= chip8->cpu.V[Y];
+            break;
+        case 0x6:                                                               /* SHR Vx {, Vy} */
+            chip8->cpu.V[0xF] = chip8->cpu.V[X] & 0x01;
+            chip8->cpu.V[X] >>= 1;
+            break;
+        case 0x7:                                                               /* SUBN Vx, Vy */
+            chip8->cpu.V[0xF] = chip8->cpu.V[Y] > chip8->cpu.V[X];
+            chip8->cpu.V[X] = chip8->cpu.V[Y] - chip8->cpu.V[X];
+            break;
+        case 0xE:                                                               /* SHL Vx {, Vy} */
+            chip8->cpu.V[0xF] = (chip8->cpu.V[X] >> 3) & 0x01;
+            chip8->cpu.V[X] <<= 1;
+            break;
+        default:
+            break;
+    }
+}
+
+static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
+    switch (nn) {
+        case 0x1E:
+            chip8->cpu.I += chip8->cpu.V[X];                                    /* ADD I, Vx */
+            break;
+        case 0x33:                                                              /* LD B, Vx */
+            chip8->memory[chip8->cpu.I + 0] = chip8->cpu.V[X] / 100;
+            chip8->memory[chip8->cpu.I + 1] = (chip8->cpu.V[X] / 10) % 10;
+            chip8->memory[chip8->cpu.I + 2] = chip8->cpu.V[X] % 10;
+            break;
+        case 0x55:                                                              /* LD [I], Vx */
+            for (size_t i = 0; i <= X; ++i) {
+                chip8->memory[chip8->cpu.I + i] = chip8->cpu.V[i];
+            }
+            break;
+        case 0x65:                                                              /* LD Vx, [I] */
+            for (size_t i = 0; i <= X; ++i) {
+                chip8->cpu.V[i] = chip8->memory[chip8->cpu.I + i];
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+static void priv_DXYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
+    uint8_t x, y;
+
+    x = chip8->cpu.V[X] % WIN_WIDTH;
+    y = chip8->cpu.V[Y] % WIN_HEIGHT;
+    chip8->cpu.V[0xF] = 0;
+
+    for (size_t i = 0; i < n; ++i) {
+        if (y >= WIN_HEIGHT) { break; }
+
+        uint8_t byte = chip8->memory[chip8->cpu.I + i];
+        for (size_t j = 0; j < 8; ++j) {
+            if (x + j >= WIN_WIDTH) { break; }
+
+            size_t pos = y * WIN_WIDTH + (x + j);
+            uint8_t pixel = (byte >> (7 - j)) & 1;
+
+            if (pixel == 1 && chip8->display[pos] == 1) {
+                chip8->cpu.V[0xF] = 1;
+            }
+
+            chip8->display[pos] ^= pixel;
+        }
+        ++y;
+    }
+
+    priv_render(chip8);
+}
+
 static void priv_update(chip8_t* chip8) {
     uint16_t opcode, addr;
     uint8_t n, X, Y, kk;
@@ -124,62 +218,75 @@ static void priv_update(chip8_t* chip8) {
     opcode = (chip8->memory[chip8->cpu.PC] << 8) | (chip8->memory[chip8->cpu.PC + 1]);
     chip8->cpu.PC += 2;
 
-    addr = opcode & 0x0fff;
-    X = (opcode & 0x0f00) >> 8;
-    Y = (opcode & 0x00f0) >> 4;
-    n = opcode & 0x000f;
-    kk = opcode & 0x00ff;
+    addr = opcode & 0x0FFF;
+    X = (opcode & 0x0F00) >> 8;
+    Y = (opcode & 0x00F0) >> 4;
+    n = opcode & 0x000F;
+    kk = opcode & 0x00FF;
 
-    switch (opcode & 0xf000) {
+    switch (opcode & 0xF000) {
         case 0x0000:
-            if (opcode == 0x00E0) {
+            if (opcode == 0x00E0) {                                             /* CLS */
                 priv_clear_display(chip8->display);
+            } else if (opcode == 0x00EE) {                                      /* RET */
+                chip8->cpu.PC = chip8->cpu.stack[chip8->cpu.SP];
+                chip8->cpu.SP--;
             }
             break;
-        case 0x1000:
+        case 0x1000:                                                            /* JMP addr */
             chip8->cpu.PC = addr;
             break;
-        case 0x6000:
-            chip8->cpu.VX[X] = kk;
+        case 0x2000:                                                            /* CALL addr */
+            chip8->cpu.SP++;
+            chip8->cpu.stack[chip8->cpu.SP] = chip8->cpu.PC;
+            chip8->cpu.PC = addr;
             break;
-        case 0x7000:
-            chip8->cpu.VX[X] += kk;
+        case 0x3000:                                                            /* SE V, byte */
+            if (chip8->cpu.V[X] == kk) {
+                chip8->cpu.PC += 2;
+            }
             break;
-        case 0xA000:
+        case 0x4000:                                                            /* SNE V, byte */
+            if (chip8->cpu.V[X] != kk) {
+                chip8->cpu.PC += 2;
+            }
+            break;
+        case 0x5000:                                                            /* SE Vx, Vy */
+            if (chip8->cpu.V[X] == chip8->cpu.V[Y]) {
+                chip8->cpu.PC += 2;
+            }
+            break;
+        case 0x6000:                                                            /* LD Vx, byte */
+            chip8->cpu.V[X] = kk;
+            break;
+        case 0x7000:                                                            /* ADD Vx, byte */
+            chip8->cpu.V[X] += kk;
+            break;
+        case 0x8000:                                                            /* see priv_8XYn() */
+            priv_8XYn(chip8, X, Y, opcode & 0xF);
+            break;
+        case 0x9000:                                                            /* SNE Vx, Vy */
+            if (chip8->cpu.V[X] != chip8->cpu.V[Y]) {
+                chip8->cpu.PC += 2;
+            }
+            break;
+        case 0xA000:                                                            /* LD I, addr */
             chip8->cpu.I = addr;
             break;
-        case 0xD000: {
-            uint8_t x, y;
-
-            x = chip8->cpu.VX[X] % WIN_WIDTH;
-            y = chip8->cpu.VX[Y] % WIN_HEIGHT;
-            chip8->cpu.VX[0xF] = 0;
-
-            for (size_t i = 0; i < n; ++i) {
-                if (y >= WIN_HEIGHT) { break; }
-
-                uint8_t byte = chip8->memory[chip8->cpu.I + i];
-                for (size_t j = 0; j < 8; ++j) {
-                    if (x + j >= WIN_WIDTH) { break; }
-
-                    size_t pos = y * WIN_WIDTH + (x + j);
-                    uint8_t pixel = (byte >> (7 - j)) & 1;
-
-                    if (pixel == 1 && chip8->display[pos] == 1) {
-                        chip8->cpu.VX[0xF] = 1;
-                    }
-
-                    chip8->display[pos] ^= pixel;
-                }
-                ++y;
-            }
-
-            priv_render(chip8);
+        case 0xB000:                                                            /* JP V0, addr */
+            chip8->cpu.PC = addr + chip8->cpu.V[0x0];
             break;
-        }
+        case 0xC000:                                                            /* RND Vx, byte */
+            uint8_t r = rand() % 0x100;
+            chip8->cpu.V[X] = r & kk;
+            break;
+        case 0xD000:                                                            /* see priv_DXYn() */
+            priv_DXYn(chip8, X, Y, n);
+            break;
+        case 0xF000:                                                            /* see priv_FXnn() */
+            priv_FXnn(chip8, X, opcode & 0x00FF);
+            break;
         default:
-            printf("%04X\n", opcode);
-            exit(EXIT_FAILURE);
             break;
     }
 }
@@ -213,6 +320,7 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode) {
         cli_init();
     }
 
+    srand(time(NULL));
     signal(SIGINT, priv_signal_callback_handler);
 
     return chip8;
