@@ -19,7 +19,7 @@ TARGET := app
 
 .PHONY: all debug release run install uninstall clean
 
-all: debug
+all: debug run
 
 # Build rule
 $(BIN_DIR)/$(TARGET): $(OBJ_FILES)
@@ -33,7 +33,7 @@ $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
 debug: CFLAGS += $(DEBUG_FLAGS)
-debug: run
+debug: $(BIN_DIR)/$(TARGET)
 
 release: clean $(BIN_DIR)/$(TARGET)
 
