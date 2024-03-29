@@ -30,8 +30,9 @@ typedef enum {
 void cli_init();
 void cli_quit();
 
+void cli_print_memory(const chip8_t* chip8);
 void cli_print_display(const uint8_t* display);
-void cli_print_debug_info(const chip8_t* chip8);
+void cli_print_debug_info(chip8_t* chip8);
 
 
 #endif /* CLI_H */
