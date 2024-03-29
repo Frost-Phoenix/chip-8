@@ -10,9 +10,14 @@
 
 => Rendering 
 	-> SDL2
-	-> CLI
+ OK -> CLI
 
 => debug (in CLI)
 	-> stop, steb-by-step
-	-> show all register (Vx DT ST I SP PC) + stack content
-	-> show dilsplay in terminal
+ OK	-> show all register (Vx DT ST I SP PC) + stack content
+ OK	-> show dilsplay in terminal
+
+=> inputs
+	-> add CLI keyboard suport
+	-> add GUI keyboard suport
+	-> add opcode keyboard suport
