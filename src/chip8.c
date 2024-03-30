@@ -166,6 +166,18 @@ static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
 
 static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
     switch (nn) {
+        case 0x07:                                                              /* LD Vx, DT */
+            chip8->cpu.V[X] = chip8->cpu.DT;
+            break;
+        case 0x15:                                                              /* LD DT, Vx */
+            chip8->cpu.DT = chip8->cpu.V[X];
+            break;
+        case 0x18:                                                              /* LD ST, Vx */
+            chip8->cpu.ST = chip8->cpu.V[X];
+            break;
+        case 0x29:                                                              /* LD F, Vx */
+            chip8->cpu.I = chip8->cpu.V[X];
+            break;
         case 0x1E:
             chip8->cpu.I += chip8->cpu.V[X];                                    /* ADD I, Vx */
             break;
@@ -323,7 +335,7 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode) {
     chip8->rendering_mode = mode;
     memcpy(chip8->memory + FONT_START_ARD, font, FONT_SIZE);
 
-    if (mode == DEBUG) {
+    if (mode == DEBUG || mode == CLI) {
         cli_init();
     }
 
