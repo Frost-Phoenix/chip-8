@@ -12,7 +12,7 @@
 
 #define MEMORY_SIZE      4096
 #define ROM_START_ADR   0x200
-#define FONT_START_ARD   0x50
+#define FONT_START_ADR   0x50
 #define FONT_SIZE      16 * 5               /* 16 * 5 byte characters */
 
 #define NB_REGISTER 16

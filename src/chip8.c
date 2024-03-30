@@ -97,20 +97,14 @@ static void priv_signal_callback_handler() {
 }
 
 static void priv_update_based_on_fps(struct timespec* last_update_time, const double target_fps, void (*update)(chip8_t*), chip8_t* chip8) {
-    const double target_frame_time = 1.0 / target_fps;
     struct timespec current_time;
     double elapsed_time;
 
     clock_gettime(CLOCK_MONOTONIC, &current_time);
     elapsed_time = (double)(current_time.tv_sec - last_update_time->tv_sec) * 1.0e9 + (double)(current_time.tv_nsec - last_update_time->tv_nsec);
-
     elapsed_time /= 1.0e9;
 
-    // printf("%f\n", elapsed_time);
-    // printf("%f\n", target_frame_time);
-    // getchar();
-
-    if (elapsed_time >= target_frame_time) {
+    if (elapsed_time >= 1.0 / target_fps) {
         if (target_fps == 1.0) {
             printf("time\n");
         }
@@ -348,9 +342,9 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode) {
     priv_load_rom(chip8, rom_path);
     chip8->cpu.PC = 0x200;
     chip8->rendering_mode = mode;
-    memcpy(chip8->memory + FONT_START_ARD, font, FONT_SIZE);
+    memcpy(chip8->memory + FONT_START_ADR, font, FONT_SIZE);
 
-    if (mode == DEBUG || mode == CLI) {
+    if (mode == CLI || mode == DEBUG) {
         cli_init();
     }
 

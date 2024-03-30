@@ -15,6 +15,7 @@
 #define PRINT_DIMED(X)      printf("\033[2m%s\033[0m", X)
 #define RESET_FORMATING()   printf("\033[0m")
 
+
 typedef enum {
     BLACK,
     RED,
