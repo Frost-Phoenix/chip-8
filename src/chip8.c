@@ -36,9 +36,12 @@ const uint8_t font[FONT_SIZE] = {
 
 static void priv_load_rom(chip8_t* chip8, const char* path);
 static void priv_signal_callback_handler();
-static void priv_update_based_on_fps(double* last_update_time, const double target_fps, void (*update)(chip8_t*), chip8_t* chip8);
+static void priv_update_based_on_fps(struct timespec* last_update_time, const double target_fps, void (*update)(chip8_t*), chip8_t* chip8);
 static void priv_update_timers(chip8_t* chip8);
 static void priv_clear_display(uint8_t* display);
+static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n);
+static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn);
+static void priv_DXYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n);
 static void priv_update(chip8_t* chip8);
 static void priv_render(chip8_t* chip8);
 
@@ -93,12 +96,24 @@ static void priv_signal_callback_handler() {
     exit(EXIT_SUCCESS);
 }
 
-static void priv_update_based_on_fps(double* last_update_time, const double target_fps, void (*update)(chip8_t*), chip8_t* chip8) {
+static void priv_update_based_on_fps(struct timespec* last_update_time, const double target_fps, void (*update)(chip8_t*), chip8_t* chip8) {
     const double target_frame_time = 1.0 / target_fps;
-    double current_time = (double)clock() / CLOCKS_PER_SEC;
-    double elapsed_time = current_time - *last_update_time;
+    struct timespec current_time;
+    double elapsed_time;
+
+    clock_gettime(CLOCK_MONOTONIC, &current_time);
+    elapsed_time = (double)(current_time.tv_sec - last_update_time->tv_sec) * 1.0e9 + (double)(current_time.tv_nsec - last_update_time->tv_nsec);
+
+    elapsed_time /= 1.0e9;
+
+    // printf("%f\n", elapsed_time);
+    // printf("%f\n", target_frame_time);
+    // getchar();
 
     if (elapsed_time >= target_frame_time) {
+        if (target_fps == 1.0) {
+            printf("time\n");
+        }
         update(chip8);
         *last_update_time = current_time;
     }
@@ -354,20 +369,21 @@ void chip8_quit(chip8_t* chip8) {
 }
 
 void chip8_main_loop(chip8_t* chip8) {
-    double last_chip8_update = 0.0;
-    double last_timer_update = 0.0;
-    double last_debug_update = 0.0;
+    struct timespec last_timer_update = { 0 };
+    struct timespec last_debug_update = { 0 };
 
     if (chip8->rendering_mode == CLI || chip8->rendering_mode == DEBUG) {
         cli_print_display(chip8->display);
     }
 
     while (1) {
-        priv_update_based_on_fps(&last_chip8_update, CHIP8_UPDATE_RATE, priv_update, chip8);
-        priv_update_based_on_fps(&last_timer_update, TIMER_UPDATE_RATE, priv_update_timers, chip8);
+        priv_update(chip8);
 
+        priv_update_based_on_fps(&last_timer_update, TIMER_UPDATE_RATE, priv_update_timers, chip8);
         if (chip8->rendering_mode == DEBUG) {
             priv_update_based_on_fps(&last_debug_update, DEBUG_UPDATE_RATE, cli_print_debug_info, chip8);
         }
+
+        usleep(1000000 / CHIP8_UPDATE_RATE);
     }
 }
