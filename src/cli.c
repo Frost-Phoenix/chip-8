@@ -114,6 +114,7 @@ static void priv_display_cpu(const chip8_t* chip8) {
  ******************************************************/
 
 void cli_init() {
+    CLEAR();
     priv_set_buffered_input(FALSE);
 }
 
@@ -137,8 +138,7 @@ void cli_print_memory(const chip8_t* chip8) {
 }
 
 void cli_print_display(const uint8_t* display) {
-    CLEAR();
-
+    MOVE_CURSOR(0, 0);
     PRINT_BOLD("┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓Game┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n");
     for (size_t r = 0; r < WIN_HEIGHT; r += 2) {
         printf("┃ ");
