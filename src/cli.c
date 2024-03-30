@@ -33,21 +33,21 @@ static void priv_display_VX_registers(const chip8_t* chip8) {
     color_t color = GREEN;
 
     SET_TEXT_COLOR(color);
-    MOVE_CURSOR(20, 6);
+    MOVE_CURSOR(20, 5);
     printf("┏━━━━━┓");
     RESET_FORMATING(); PRINT_BOLD("VX");
     SET_TEXT_COLOR(color); printf("┏━━━━━┓");
-    MOVE_CURSOR(21, 6); printf("┃              ┃");
+    MOVE_CURSOR(21, 5); printf("┃              ┃");
 
     for (size_t i = 0; i < STACK_SIZE; ++i) {
-        MOVE_CURSOR(22 + STACK_SIZE - (int)i - 1, 6);
+        MOVE_CURSOR(22 + STACK_SIZE - (int)i - 1, 5);
         SET_TEXT_COLOR(color); printf("┃  "); RESET_FORMATING();
         printf("V%1lX ", i); PRINT_DIMED("->"); printf(" 0x%02X", chip8->cpu.V[i]);
         SET_TEXT_COLOR(color); printf("  ┃");
     }
 
-    MOVE_CURSOR(38, 6); printf("┃              ┃");
-    MOVE_CURSOR(39, 6); printf("┗━━━━━━━━━━━━━━┛");
+    MOVE_CURSOR(38, 5); printf("┃              ┃");
+    MOVE_CURSOR(39, 5); printf("┗━━━━━━━━━━━━━━┛");
     RESET_FORMATING();
 }
 
@@ -55,21 +55,21 @@ static void priv_display_stack(const chip8_t* chip8) {
     color_t color = RED;
 
     SET_TEXT_COLOR(color);
-    MOVE_CURSOR(20, 24);
+    MOVE_CURSOR(20, 23);
     printf("┏━━━━━┓");
     RESET_FORMATING(); PRINT_BOLD("Stack");
     SET_TEXT_COLOR(color); printf("┏━━━━━┓");
-    MOVE_CURSOR(21, 24); printf("┃                 ┃");
+    MOVE_CURSOR(21, 23); printf("┃                 ┃");
 
     for (size_t i = 0; i < STACK_SIZE; ++i) {
-        MOVE_CURSOR(22 + STACK_SIZE - (int)i - 1, 24);
+        MOVE_CURSOR(22 + STACK_SIZE - (int)i - 1, 23);
         SET_TEXT_COLOR(color); printf("┃  "); RESET_FORMATING();
         printf("0x%01lX ", i); PRINT_DIMED("->"); printf(" 0x%04X", chip8->cpu.stack[i]);
         SET_TEXT_COLOR(color); printf("  ┃");
     }
 
-    MOVE_CURSOR(38, 24); printf("┃                 ┃");
-    MOVE_CURSOR(39, 24); printf("┗━━━━━━━━━━━━━━━━━┛");
+    MOVE_CURSOR(38, 23); printf("┃                 ┃");
+    MOVE_CURSOR(39, 23); printf("┗━━━━━━━━━━━━━━━━━┛");
     RESET_FORMATING();
 }
 
@@ -77,25 +77,31 @@ static void priv_display_cpu(const chip8_t* chip8) {
     color_t color = BLUE;
 
     SET_TEXT_COLOR(color);
-    MOVE_CURSOR(20, 45);
-    printf("┏━━━━━━┓");
+    MOVE_CURSOR(20, 44);
+    printf("┏━━━━━━━┓");
     RESET_FORMATING(); PRINT_BOLD("Cpu");
-    SET_TEXT_COLOR(color); printf("┏━━━━━━┓");
-    MOVE_CURSOR(21, 45); printf("┃                 ┃");
+    SET_TEXT_COLOR(color); printf("┏━━━━━━━┓");
+    MOVE_CURSOR(21, 44); printf("┃                   ┃");
 
-    MOVE_CURSOR(22, 45); SET_TEXT_COLOR(color); printf("┃   "); RESET_FORMATING();
-    printf("PC "); PRINT_DIMED("->"); printf(" 0x%04X", chip8->cpu.PC); SET_TEXT_COLOR(color); printf("  ┃");
-    MOVE_CURSOR(23, 45); SET_TEXT_COLOR(color); printf("┃   "); RESET_FORMATING();
-    printf("SC "); PRINT_DIMED("->"); printf(" 0x%02X", chip8->cpu.SP); SET_TEXT_COLOR(color); printf("    ┃");
-    MOVE_CURSOR(24, 45); SET_TEXT_COLOR(color); printf("┃   "); RESET_FORMATING();
-    printf("DT "); PRINT_DIMED("->"); printf(" 0x%02X", chip8->cpu.DT); SET_TEXT_COLOR(color); printf("    ┃");
-    MOVE_CURSOR(25, 45); SET_TEXT_COLOR(color); printf("┃   "); RESET_FORMATING();
-    printf("ST "); PRINT_DIMED("->"); printf(" 0x%02X", chip8->cpu.ST); SET_TEXT_COLOR(color); printf("    ┃");
-    MOVE_CURSOR(26, 45); SET_TEXT_COLOR(color); printf("┃   "); RESET_FORMATING();
-    printf("I  "); PRINT_DIMED("->"); printf(" 0x%04X", chip8->cpu.I); SET_TEXT_COLOR(color); printf("  ┃");
+    MOVE_CURSOR(22, 44); SET_TEXT_COLOR(color); printf("┃    "); RESET_FORMATING();
+    printf("PC "); PRINT_DIMED("->"); printf(" 0x%04X", chip8->cpu.PC); SET_TEXT_COLOR(color); printf("   ┃");
+    MOVE_CURSOR(23, 44); SET_TEXT_COLOR(color); printf("┃    "); RESET_FORMATING();
+    printf("SP "); PRINT_DIMED("->"); printf(" 0x%02X", chip8->cpu.SP); SET_TEXT_COLOR(color); printf("     ┃");
+    MOVE_CURSOR(24, 44); SET_TEXT_COLOR(color); printf("┃    "); RESET_FORMATING();
+    printf("DT "); PRINT_DIMED("->"); printf(" 0x%02X", chip8->cpu.DT); SET_TEXT_COLOR(color); printf("     ┃");
+    MOVE_CURSOR(25, 44); SET_TEXT_COLOR(color); printf("┃    "); RESET_FORMATING();
+    printf("ST "); PRINT_DIMED("->"); printf(" 0x%02X", chip8->cpu.ST); SET_TEXT_COLOR(color); printf("     ┃");
+    MOVE_CURSOR(26, 44); SET_TEXT_COLOR(color); printf("┃    "); RESET_FORMATING();
+    printf("I  "); PRINT_DIMED("->"); printf(" 0x%04X", chip8->cpu.I); SET_TEXT_COLOR(color); printf("   ┃");
+    MOVE_CURSOR(27, 44); printf("┃                   ┃");
+    MOVE_CURSOR(28, 44); SET_TEXT_COLOR(color); printf("┃"); RESET_FORMATING();
+    printf("    Keys state:    "); SET_TEXT_COLOR(color); printf("┃");
+    MOVE_CURSOR(29, 44); SET_TEXT_COLOR(color); printf("┃ "); RESET_FORMATING();
+    printf(BYTE_TO_BINARY_PATTERN" "BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(chip8->keys_current_state >> 8), BYTE_TO_BINARY(chip8->keys_current_state));
+    SET_TEXT_COLOR(color); printf(" ┃");
 
-    MOVE_CURSOR(27, 45); printf("┃                 ┃");
-    MOVE_CURSOR(28, 45); printf("┗━━━━━━━━━━━━━━━━━┛");
+    MOVE_CURSOR(30, 44); printf("┃                   ┃");
+    MOVE_CURSOR(31, 44); printf("┗━━━━━━━━━━━━━━━━━━━┛");
     RESET_FORMATING();
 }
 

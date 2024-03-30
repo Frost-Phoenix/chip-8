@@ -57,7 +57,7 @@ void gui_init(gui_t* gui, const char* title, int x, int y, int w, int h, const U
 }
 
 void gui_quit(gui_t* gui) {
-    SDL_DestroyWindow(gui->win);
+    // SDL_DestroyWindow(gui->win);
     SDL_DestroyRenderer(gui->ren);
     SDL_DestroyTexture(gui->texture);
 
@@ -66,11 +66,17 @@ void gui_quit(gui_t* gui) {
     SDL_Log("Quit");
 }
 
-void gui_poll_events(gui_t* gui) {
+void gui_poll_events(gui_t* gui, uint16_t* keys_state) {
     while (SDL_PollEvent(&gui->event) != 0) {
         switch (gui->event.type) {
             case SDL_QUIT:
                 gui->running = FALSE;
+                break;
+            case SDL_KEYDOWN:
+                BIT_SET(*keys_state, get_key(gui->event.key.keysym.sym));
+                break;
+            case SDL_KEYUP:
+                BIT_CLEAR(*keys_state, get_key(gui->event.key.keysym.sym));
                 break;
             default:
                 break;

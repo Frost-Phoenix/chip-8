@@ -87,7 +87,7 @@ static void priv_signal_callback_handler() {
     exit(EXIT_SUCCESS);
 }
 
-static void priv_update_based_on_fps(struct timespec* last_update_time, const double target_fps, void(*update)(), void* chip8) {
+static void priv_update_based_on_fps(struct timespec* last_update_time, const double target_fps, void(*update)(chip8_t*), chip8_t* chip8) {
     struct timespec current_time;
     double elapsed_time;
 
@@ -96,9 +96,6 @@ static void priv_update_based_on_fps(struct timespec* last_update_time, const do
     elapsed_time /= 1.0e9;
 
     if (elapsed_time >= 1.0 / target_fps) {
-        if (target_fps == 1.0) {
-            printf("time\n");
-        }
         update(chip8);
         *last_update_time = current_time;
     }
@@ -110,6 +107,22 @@ static void priv_update_timers(chip8_t* chip8) {
     }
     if (chip8->cpu.ST > 0) {
         chip8->cpu.ST--;
+    }
+}
+
+static void priv_60Hz_update(chip8_t* chip8) {
+    priv_update_timers(chip8);
+
+    if (chip8->rendering_mode == DEBUG) {
+        cli_print_debug_info(chip8);
+    } else if (chip8->rendering_mode == GUI) {
+        chip8->keys_last_state = chip8->keys_current_state;
+        gui_poll_events(chip8->gui, &chip8->keys_current_state);
+        if (chip8->gui->running == FALSE) {
+            chip8->running = FALSE;
+        }
+        cli_print_debug_info(chip8);
+
     }
 }
 
@@ -164,10 +177,36 @@ static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
     }
 }
 
+static void priv_Exnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
+    switch (nn) {
+        case 0x9E:
+            if (BIT_CHECK(chip8->keys_current_state, chip8->cpu.V[X] & 0xF)) {
+                chip8->cpu.PC += 2;
+            }
+            break;
+        case 0xA1:
+            if (!BIT_CHECK(chip8->keys_current_state, chip8->cpu.V[X] & 0xF)) {
+                chip8->cpu.PC += 2;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
 static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
     switch (nn) {
         case 0x07:                                                              /* LD Vx, DT */
             chip8->cpu.V[X] = chip8->cpu.DT;
+            break;
+        case 0x0A:
+            for (size_t i = 0; i < 0xF; i++) {
+                if (!BIT_CHECK(chip8->keys_current_state, i) && BIT_CHECK(chip8->keys_last_state, i)) {
+                    chip8->cpu.V[X] = i;
+                    return;
+                }
+            }
+            chip8->cpu.PC -= 2;
             break;
         case 0x15:                                                              /* LD DT, Vx */
             chip8->cpu.DT = chip8->cpu.V[X];
@@ -175,11 +214,11 @@ static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
         case 0x18:                                                              /* LD ST, Vx */
             chip8->cpu.ST = chip8->cpu.V[X];
             break;
-        case 0x29:                                                              /* LD F, Vx */
-            chip8->cpu.I = chip8->cpu.V[X];
-            break;
         case 0x1E:
             chip8->cpu.I += chip8->cpu.V[X];                                    /* ADD I, Vx */
+            break;
+        case 0x29:                                                              /* LD F, Vx */
+            chip8->cpu.I = chip8->cpu.V[X];
             break;
         case 0x33:                                                              /* LD B, Vx */
             chip8->memory[chip8->cpu.I + 0] = chip8->cpu.V[X] / 100;
@@ -230,7 +269,7 @@ static void priv_DXYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
     priv_render(chip8);
 }
 
-static void priv_update(chip8_t* chip8) {
+static void priv_update_chip8(chip8_t* chip8) {
     uint16_t opcode, addr;
     uint8_t n, X, Y, kk;
 
@@ -248,16 +287,16 @@ static void priv_update(chip8_t* chip8) {
             if (opcode == 0x00E0) {                                             /* CLS */
                 priv_clear_display(chip8->display);
             } else if (opcode == 0x00EE) {                                      /* RET */
-                chip8->cpu.PC = chip8->cpu.stack[chip8->cpu.SP];
                 chip8->cpu.SP--;
+                chip8->cpu.PC = chip8->cpu.stack[chip8->cpu.SP & 0xF];
             }
             break;
         case 0x1000:                                                            /* JMP addr */
             chip8->cpu.PC = addr;
             break;
         case 0x2000:                                                            /* CALL addr */
+            chip8->cpu.stack[chip8->cpu.SP & 0xF] = chip8->cpu.PC;
             chip8->cpu.SP++;
-            chip8->cpu.stack[chip8->cpu.SP] = chip8->cpu.PC;
             chip8->cpu.PC = addr;
             break;
         case 0x3000:                                                            /* SE V, byte */
@@ -301,6 +340,9 @@ static void priv_update(chip8_t* chip8) {
             break;
         case 0xD000:                                                            /* see priv_DXYn() */
             priv_DXYn(chip8, X, Y, n);
+            break;
+        case 0xE000:
+            priv_Exnn(chip8, X, kk);
             break;
         case 0xF000:                                                            /* see priv_FXnn() */
             priv_FXnn(chip8, X, opcode & 0x00FF);
@@ -357,6 +399,8 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode) {
     srand(time(NULL));
     signal(SIGINT, priv_signal_callback_handler);
 
+    priv_render(chip8);
+
     return chip8;
 }
 
@@ -372,29 +416,12 @@ void chip8_quit(chip8_t* chip8) {
 }
 
 void chip8_main_loop(chip8_t* chip8) {
-    struct timespec last_timer_update = { 0 };
-    struct timespec last_debug_update = { 0 };
-
-    if (chip8->rendering_mode == CLI || chip8->rendering_mode == DEBUG) {
-        cli_print_display(chip8->display);
-    } else if (chip8->rendering_mode == GUI) {
-        gui_set_buffer(chip8->gui, chip8->display);
-        gui_render(chip8->gui);
-    }
+    struct timespec last_60Hz_update = { 0 };
 
     while (chip8->running) {
-        priv_update(chip8);
+        priv_update_chip8(chip8);
+        priv_update_based_on_fps(&last_60Hz_update, UPDATE_RATE_60Hz, priv_60Hz_update, chip8);
 
-        priv_update_based_on_fps(&last_timer_update, TIMER_UPDATE_RATE, priv_update_timers, chip8);
-        if (chip8->rendering_mode == DEBUG) {
-            priv_update_based_on_fps(&last_debug_update, DEBUG_UPDATE_RATE, cli_print_debug_info, chip8);
-        } else if (chip8->rendering_mode == GUI) {
-            priv_update_based_on_fps(&last_debug_update, GUI_UPDATE_RATE, gui_poll_events, chip8->gui);
-            if (chip8->gui->running == FALSE) {
-                chip8->running = FALSE;
-            }
-        }
-
-        usleep(1000000 / CHIP8_UPDATE_RATE);
+        usleep(1000000 / UPDATE_RATE_chip8);
     }
 }

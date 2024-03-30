@@ -21,7 +21,7 @@ typedef struct gui {
 void gui_init(gui_t* gui, const char* title, int x, int y, int w, int h, const Uint32 flags);
 void gui_quit(gui_t* gui);
 
-void gui_poll_events(gui_t* gui);
+void gui_poll_events(gui_t* gui, uint16_t* keys_state);
 void gui_set_buffer(gui_t* gui, uint8_t* buffer);
 void gui_render(gui_t* gui);
 
