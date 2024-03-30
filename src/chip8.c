@@ -139,12 +139,15 @@ static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
             break;
         case 0x1:                                                               /* OR Vx, Vy */
             chip8->cpu.V[X] |= chip8->cpu.V[Y];
+            chip8->cpu.V[0xF] = 0;
             break;
         case 0x2:                                                               /* AND Vx, Vy */
             chip8->cpu.V[X] &= chip8->cpu.V[Y];
+            chip8->cpu.V[0xF] = 0;
             break;
         case 0x3:                                                               /* XOR Vx, Vy */
             chip8->cpu.V[X] ^= chip8->cpu.V[Y];
+            chip8->cpu.V[0xF] = 0;
             break;
         case 0x4: {                                                               /* ADD Vx, Vy */
             uint16_t res = chip8->cpu.V[X] + chip8->cpu.V[Y];
@@ -158,6 +161,7 @@ static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
             chip8->cpu.V[0xF] = flag;
             break;
         case 0x6:                                                               /* SHR Vx {, Vy} */
+            chip8->cpu.V[X] = chip8->cpu.V[Y];
             flag = chip8->cpu.V[X] & 0x01;
             chip8->cpu.V[X] >>= 1;
             chip8->cpu.V[0xF] = flag;
@@ -168,6 +172,7 @@ static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
             chip8->cpu.V[0xF] = flag;
             break;
         case 0xE:                                                               /* SHL Vx {, Vy} */
+            chip8->cpu.V[X] = chip8->cpu.V[Y];
             flag = (chip8->cpu.V[X] >> 3) & 0x01;
             chip8->cpu.V[X] <<= 1;
             chip8->cpu.V[0xF] = flag;
@@ -179,12 +184,12 @@ static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
 
 static void priv_Exnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
     switch (nn) {
-        case 0x9E:
+        case 0x9E:                                                              /* SKP Vx */
             if (BIT_CHECK(chip8->keys_current_state, chip8->cpu.V[X] & 0xF)) {
                 chip8->cpu.PC += 2;
             }
             break;
-        case 0xA1:
+        case 0xA1:                                                              /* SKNP Vx */
             if (!BIT_CHECK(chip8->keys_current_state, chip8->cpu.V[X] & 0xF)) {
                 chip8->cpu.PC += 2;
             }
@@ -199,7 +204,7 @@ static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
         case 0x07:                                                              /* LD Vx, DT */
             chip8->cpu.V[X] = chip8->cpu.DT;
             break;
-        case 0x0A:
+        case 0x0A:                                                              /* LD Vx, K */
             for (size_t i = 0; i < 0xF; i++) {
                 if (!BIT_CHECK(chip8->keys_current_state, i) && BIT_CHECK(chip8->keys_last_state, i)) {
                     chip8->cpu.V[X] = i;
@@ -214,8 +219,8 @@ static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
         case 0x18:                                                              /* LD ST, Vx */
             chip8->cpu.ST = chip8->cpu.V[X];
             break;
-        case 0x1E:
-            chip8->cpu.I += chip8->cpu.V[X];                                    /* ADD I, Vx */
+        case 0x1E:                                                              /* ADD I, Vx */
+            chip8->cpu.I += chip8->cpu.V[X];
             break;
         case 0x29:                                                              /* LD F, Vx */
             chip8->cpu.I = chip8->cpu.V[X];
@@ -227,12 +232,12 @@ static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
             break;
         case 0x55:                                                              /* LD [I], Vx */
             for (size_t i = 0; i <= X; ++i) {
-                chip8->memory[chip8->cpu.I + i] = chip8->cpu.V[i];
+                chip8->memory[chip8->cpu.I++] = chip8->cpu.V[i];
             }
             break;
         case 0x65:                                                              /* LD Vx, [I] */
             for (size_t i = 0; i <= X; ++i) {
-                chip8->cpu.V[i] = chip8->memory[chip8->cpu.I + i];
+                chip8->cpu.V[i] = chip8->memory[chip8->cpu.I++];
             }
             break;
         default:
@@ -341,7 +346,7 @@ static void priv_update_chip8(chip8_t* chip8) {
         case 0xD000:                                                            /* see priv_DXYn() */
             priv_DXYn(chip8, X, Y, n);
             break;
-        case 0xE000:
+        case 0xE000:                                                            /* see priv_EXnn() */
             priv_Exnn(chip8, X, kk);
             break;
         case 0xF000:                                                            /* see priv_FXnn() */

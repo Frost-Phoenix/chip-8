@@ -7,7 +7,7 @@
 #include "gui.h"
 
 
-#define UPDATE_RATE_chip8 700
+#define UPDATE_RATE_chip8 900
 #define UPDATE_RATE_60Hz   60
 
 #define MEMORY_SIZE      4096
