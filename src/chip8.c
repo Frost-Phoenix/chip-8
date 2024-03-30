@@ -34,15 +34,6 @@ const uint8_t font[FONT_SIZE] = {
  *                 Private functions                  *
  ******************************************************/
 
-static void priv_load_rom(chip8_t* chip8, const char* path);
-static void priv_signal_callback_handler();
-static void priv_update_based_on_fps(struct timespec* last_update_time, const double target_fps, void (*update)(chip8_t*), chip8_t* chip8);
-static void priv_update_timers(chip8_t* chip8);
-static void priv_clear_display(uint8_t* display);
-static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n);
-static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn);
-static void priv_DXYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n);
-static void priv_update(chip8_t* chip8);
 static void priv_render(chip8_t* chip8);
 
 
@@ -96,7 +87,7 @@ static void priv_signal_callback_handler() {
     exit(EXIT_SUCCESS);
 }
 
-static void priv_update_based_on_fps(struct timespec* last_update_time, const double target_fps, void (*update)(chip8_t*), chip8_t* chip8) {
+static void priv_update_based_on_fps(struct timespec* last_update_time, const double target_fps, void(*update)(), void* chip8) {
     struct timespec current_time;
     double elapsed_time;
 
@@ -322,6 +313,9 @@ static void priv_update(chip8_t* chip8) {
 static void priv_render(chip8_t* chip8) {               /* execute when display is modified */
     if (chip8->rendering_mode == CLI || chip8->rendering_mode == DEBUG) {
         cli_print_display(chip8->display);
+    } else if (chip8->rendering_mode == GUI) {
+        gui_set_buffer(chip8->gui, chip8->display);
+        gui_render(chip8->gui);
     }
 }
 
@@ -346,7 +340,19 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode) {
 
     if (mode == CLI || mode == DEBUG) {
         cli_init();
+    } else if (mode == GUI) {
+        chip8->gui = malloc(sizeof(gui_t));
+        gui_init(
+            chip8->gui,
+            "Chip8", SDL_WINDOWPOS_CENTERED,
+            SDL_WINDOWPOS_CENTERED,
+            WIN_WIDTH * WIN_SCALE,
+            WIN_HEIGHT * WIN_SCALE,
+            SDL_WINDOW_SHOWN
+        );
     }
+
+    chip8->running = TRUE;
 
     srand(time(NULL));
     signal(SIGINT, priv_signal_callback_handler);
@@ -357,6 +363,9 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode) {
 void chip8_quit(chip8_t* chip8) {
     if (chip8->rendering_mode == CLI || chip8->rendering_mode == DEBUG) {
         cli_quit();
+    } else if (chip8->rendering_mode == GUI) {
+        gui_quit(chip8->gui);
+        free(chip8->gui);
     }
 
     free(chip8);
@@ -368,14 +377,22 @@ void chip8_main_loop(chip8_t* chip8) {
 
     if (chip8->rendering_mode == CLI || chip8->rendering_mode == DEBUG) {
         cli_print_display(chip8->display);
+    } else if (chip8->rendering_mode == GUI) {
+        gui_set_buffer(chip8->gui, chip8->display);
+        gui_render(chip8->gui);
     }
 
-    while (1) {
+    while (chip8->running) {
         priv_update(chip8);
 
         priv_update_based_on_fps(&last_timer_update, TIMER_UPDATE_RATE, priv_update_timers, chip8);
         if (chip8->rendering_mode == DEBUG) {
             priv_update_based_on_fps(&last_debug_update, DEBUG_UPDATE_RATE, cli_print_debug_info, chip8);
+        } else if (chip8->rendering_mode == GUI) {
+            priv_update_based_on_fps(&last_debug_update, GUI_UPDATE_RATE, gui_poll_events, chip8->gui);
+            if (chip8->gui->running == FALSE) {
+                chip8->running = FALSE;
+            }
         }
 
         usleep(1000000 / CHIP8_UPDATE_RATE);

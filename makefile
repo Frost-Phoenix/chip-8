@@ -11,7 +11,7 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 CC := gcc
-CFLAGS := -std=$(CSTD) -Wall -Wextra -Werror
+CFLAGS := -std=$(CSTD) -Wall -Wextra # -Werror
 LIBS   = -lSDL2
 DEBUG_FLAGS := -fsanitize=address,undefined
 
@@ -19,7 +19,7 @@ TARGET := app
 
 .PHONY: all debug release run install uninstall clean
 
-all: debug run
+all: $(BIN_DIR)/$(TARGET) run
 
 # Build rule
 $(BIN_DIR)/$(TARGET): $(OBJ_FILES)

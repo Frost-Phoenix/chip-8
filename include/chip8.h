@@ -4,11 +4,13 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "gui.h"
 
 
 #define CHIP8_UPDATE_RATE   700
 #define TIMER_UPDATE_RATE    60
 #define DEBUG_UPDATE_RATE    60
+#define GUI_UPDATE_RATE      60
 
 #define MEMORY_SIZE      4096
 #define ROM_START_ADR   0x200
@@ -40,7 +42,10 @@ typedef struct chip8 {
     uint8_t memory[MEMORY_SIZE];
     uint8_t display[WIN_WIDTH * WIN_HEIGHT];
 
+    gui_t* gui;
     rendering_mode_t rendering_mode;
+
+    int running;
 } chip8_t;
 
 
