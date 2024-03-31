@@ -11,9 +11,10 @@ ifeq ($(UNAME_S),Linux)
 endif
 
 CC := gcc
-CFLAGS := -std=$(CSTD) -Wall -Wextra # -Werror
+CFLAGS := -std=$(CSTD) -Wall -Wextra -Werror
 LIBS   = -lSDL2
 DEBUG_FLAGS := -fsanitize=address,undefined
+RELEASE_FLAGS := -O2
 
 TARGET := app
 
@@ -35,6 +36,7 @@ $(BIN_DIR):
 debug: CFLAGS += $(DEBUG_FLAGS)
 debug: $(BIN_DIR)/$(TARGET)
 
+release: CFLAGS += $(RELEASE_FLAGS)
 release: clean $(BIN_DIR)/$(TARGET)
 
 run: $(BIN_DIR)/$(TARGET)
