@@ -8,7 +8,7 @@ pkgs.mkShell {
   ];
 
   shellHook = ''
-    hyprctl keyword windowrulev2 "float,class:^(app)$"
+    hyprctl keyword windowrulev2 "float,class:^(chip-8)$"
     export SDL_VIDEODRIVER=wayland
   '';
 }

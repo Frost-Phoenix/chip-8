@@ -16,11 +16,11 @@ LIBS   = -lSDL2
 DEBUG_FLAGS := -fsanitize=address,undefined
 RELEASE_FLAGS := -O2
 
-TARGET := app
+TARGET := chip-8
 
 .PHONY: all debug release run install uninstall clean
 
-all: $(BIN_DIR)/$(TARGET) run
+all: $(BIN_DIR)/$(TARGET) 
 
 # Build rule
 $(BIN_DIR)/$(TARGET): $(OBJ_FILES)
