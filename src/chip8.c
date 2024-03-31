@@ -87,7 +87,7 @@ static void priv_signal_callback_handler() {
     exit(EXIT_SUCCESS);
 }
 
-static void priv_update_based_on_fps(struct timespec* last_update_time, const double target_fps, void(*update)(chip8_t*), chip8_t* chip8) {
+static void priv_delayed_update(struct timespec* last_update_time, const double target_fps, void(*update)(chip8_t*), chip8_t* chip8) {
     struct timespec current_time;
     double elapsed_time;
 
@@ -102,11 +102,13 @@ static void priv_update_based_on_fps(struct timespec* last_update_time, const do
 }
 
 static void priv_update_timers(chip8_t* chip8) {
-    if (chip8->cpu.DT > 0) {
-        chip8->cpu.DT--;
+    cpu_t* cpu = &chip8->cpu;
+
+    if (cpu->DT > 0) {
+        cpu->DT--;
     }
-    if (chip8->cpu.ST > 0) {
-        chip8->cpu.ST--;
+    if (cpu->ST > 0) {
+        cpu->ST--;
     }
 }
 
@@ -118,11 +120,10 @@ static void priv_60Hz_update(chip8_t* chip8) {
     } else if (chip8->rendering_mode == GUI) {
         chip8->keys_last_state = chip8->keys_current_state;
         gui_poll_events(chip8->gui, &chip8->keys_current_state);
+
         if (chip8->gui->running == FALSE) {
             chip8->running = FALSE;
         }
-        cli_print_debug_info(chip8);
-
     }
 }
 
@@ -131,51 +132,52 @@ static void priv_clear_display(uint8_t* display) {
 }
 
 static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
+    cpu_t* cpu = &chip8->cpu;
     uint8_t flag;
 
     switch (n) {
         case 0x0:                                                               /* LD Vx, Vy */
-            chip8->cpu.V[X] = chip8->cpu.V[Y];
+            cpu->V[X] = cpu->V[Y];
             break;
         case 0x1:                                                               /* OR Vx, Vy */
-            chip8->cpu.V[X] |= chip8->cpu.V[Y];
-            chip8->cpu.V[0xF] = 0;
+            cpu->V[X] |= cpu->V[Y];
+            cpu->V[0xF] = 0;
             break;
         case 0x2:                                                               /* AND Vx, Vy */
-            chip8->cpu.V[X] &= chip8->cpu.V[Y];
-            chip8->cpu.V[0xF] = 0;
+            cpu->V[X] &= cpu->V[Y];
+            cpu->V[0xF] = 0;
             break;
         case 0x3:                                                               /* XOR Vx, Vy */
-            chip8->cpu.V[X] ^= chip8->cpu.V[Y];
-            chip8->cpu.V[0xF] = 0;
+            cpu->V[X] ^= cpu->V[Y];
+            cpu->V[0xF] = 0;
             break;
         case 0x4: {                                                               /* ADD Vx, Vy */
-            uint16_t res = chip8->cpu.V[X] + chip8->cpu.V[Y];
-            chip8->cpu.V[X] = res & 0xFF;
-            chip8->cpu.V[0xF] = res > 0xFF;
+            uint16_t res = cpu->V[X] + cpu->V[Y];
+            cpu->V[X] = res & 0xFF;
+            cpu->V[0xF] = res > 0xFF;
             break;
         }
         case 0x5:                                                               /* SUB Vx, Vy */
-            flag = chip8->cpu.V[X] >= chip8->cpu.V[Y];
-            chip8->cpu.V[X] -= chip8->cpu.V[Y];
-            chip8->cpu.V[0xF] = flag;
+            flag = cpu->V[X] >= cpu->V[Y];
+            cpu->V[X] -= cpu->V[Y];
+            cpu->V[0xF] = flag;
             break;
         case 0x6:                                                               /* SHR Vx {, Vy} */
-            chip8->cpu.V[X] = chip8->cpu.V[Y];
-            flag = chip8->cpu.V[X] & 0x01;
-            chip8->cpu.V[X] >>= 1;
-            chip8->cpu.V[0xF] = flag;
+            cpu->V[X] = cpu->V[Y];
+            flag = cpu->V[X] & 0x01;
+            cpu->V[X] >>= 1;
+            cpu->V[0xF] = flag;
             break;
         case 0x7:                                                               /* SUBN Vx, Vy */
-            flag = chip8->cpu.V[Y] >= chip8->cpu.V[X];
-            chip8->cpu.V[X] = chip8->cpu.V[Y] - chip8->cpu.V[X];
-            chip8->cpu.V[0xF] = flag;
+            flag = cpu->V[Y] >= cpu->V[X];
+            cpu->V[X] = cpu->V[Y] - cpu->V[X];
+            cpu->V[0xF] = flag;
             break;
         case 0xE:                                                               /* SHL Vx {, Vy} */
-            chip8->cpu.V[X] = chip8->cpu.V[Y];
-            flag = (chip8->cpu.V[X] >> 7) & 0x01;
-            chip8->cpu.V[X] <<= 1;
-            chip8->cpu.V[0xF] = flag;
+            cpu->V[X] = cpu->V[Y];
+            flag = (cpu->V[X] >> 7) & 0x01;
+            cpu->V[X] <<= 1;
+            cpu->V[0xF] = flag;
             break;
         default:
             break;
@@ -183,15 +185,17 @@ static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
 }
 
 static void priv_Exnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
+    cpu_t* cpu = &chip8->cpu;
+
     switch (nn) {
         case 0x9E:                                                              /* SKP Vx */
-            if (BIT_CHECK(chip8->keys_current_state, chip8->cpu.V[X] & 0xF)) {
-                chip8->cpu.PC += 2;
+            if (BIT_CHECK(chip8->keys_current_state, cpu->V[X] & 0xF)) {
+                cpu->PC += 2;
             }
             break;
         case 0xA1:                                                              /* SKNP Vx */
-            if (!BIT_CHECK(chip8->keys_current_state, chip8->cpu.V[X] & 0xF)) {
-                chip8->cpu.PC += 2;
+            if (!BIT_CHECK(chip8->keys_current_state, cpu->V[X] & 0xF)) {
+                cpu->PC += 2;
             }
             break;
         default:
@@ -200,44 +204,46 @@ static void priv_Exnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
 }
 
 static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
+    cpu_t* cpu = &chip8->cpu;
+
     switch (nn) {
         case 0x07:                                                              /* LD Vx, DT */
-            chip8->cpu.V[X] = chip8->cpu.DT;
+            cpu->V[X] = cpu->DT;
             break;
         case 0x0A:                                                              /* LD Vx, K */
             for (size_t i = 0; i < 0xF; i++) {
                 if (!BIT_CHECK(chip8->keys_current_state, i) && BIT_CHECK(chip8->keys_last_state, i)) {
-                    chip8->cpu.V[X] = i;
+                    cpu->V[X] = i;
                     return;
                 }
             }
-            chip8->cpu.PC -= 2;
+            cpu->PC -= 2;
             break;
         case 0x15:                                                              /* LD DT, Vx */
-            chip8->cpu.DT = chip8->cpu.V[X];
+            cpu->DT = cpu->V[X];
             break;
         case 0x18:                                                              /* LD ST, Vx */
-            chip8->cpu.ST = chip8->cpu.V[X];
+            cpu->ST = cpu->V[X];
             break;
         case 0x1E:                                                              /* ADD I, Vx */
-            chip8->cpu.I += chip8->cpu.V[X];
+            cpu->I += cpu->V[X];
             break;
         case 0x29:                                                              /* LD F, Vx */
-            chip8->cpu.I = FONT_START_ADR + (chip8->cpu.V[X] & 0xF) * 5;
+            cpu->I = FONT_START_ADR + (cpu->V[X] & 0xF) * 5;
             break;
         case 0x33:                                                              /* LD B, Vx */
-            chip8->memory[chip8->cpu.I + 0] = chip8->cpu.V[X] / 100;
-            chip8->memory[chip8->cpu.I + 1] = (chip8->cpu.V[X] / 10) % 10;
-            chip8->memory[chip8->cpu.I + 2] = chip8->cpu.V[X] % 10;
+            chip8->memory[cpu->I + 0] = cpu->V[X] / 100;
+            chip8->memory[cpu->I + 1] = (cpu->V[X] / 10) % 10;
+            chip8->memory[cpu->I + 2] = cpu->V[X] % 10;
             break;
         case 0x55:                                                              /* LD [I], Vx */
             for (size_t i = 0; i <= X; ++i) {
-                chip8->memory[chip8->cpu.I++] = chip8->cpu.V[i];
+                chip8->memory[cpu->I++] = cpu->V[i];
             }
             break;
         case 0x65:                                                              /* LD Vx, [I] */
             for (size_t i = 0; i <= X; ++i) {
-                chip8->cpu.V[i] = chip8->memory[chip8->cpu.I++];
+                cpu->V[i] = chip8->memory[cpu->I++];
             }
             break;
         default:
@@ -246,16 +252,17 @@ static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
 }
 
 static void priv_DXYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
+    cpu_t* cpu = &chip8->cpu;
     uint8_t x, y;
 
-    x = chip8->cpu.V[X] % WIN_WIDTH;
-    y = chip8->cpu.V[Y] % WIN_HEIGHT;
-    chip8->cpu.V[0xF] = 0;
+    x = cpu->V[X] % WIN_WIDTH;
+    y = cpu->V[Y] % WIN_HEIGHT;
+    cpu->V[0xF] = 0;
 
     for (size_t i = 0; i < n; ++i) {
         if (y >= WIN_HEIGHT) { break; }
 
-        uint8_t byte = chip8->memory[chip8->cpu.I + i];
+        uint8_t byte = chip8->memory[cpu->I + i];
         for (size_t j = 0; j < 8; ++j) {
             if (x + j >= WIN_WIDTH) { break; }
 
@@ -263,7 +270,7 @@ static void priv_DXYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
             uint8_t pixel = (byte >> (7 - j)) & 1;
 
             if (pixel == 1 && chip8->display[pos] == 1) {
-                chip8->cpu.V[0xF] = 1;
+                cpu->V[0xF] = 1;
             }
 
             chip8->display[pos] ^= pixel;
@@ -275,11 +282,12 @@ static void priv_DXYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
 }
 
 static void priv_update_chip8(chip8_t* chip8) {
+    cpu_t* cpu = &chip8->cpu;
     uint16_t opcode, addr;
     uint8_t n, X, Y, kk;
 
-    opcode = (chip8->memory[chip8->cpu.PC] << 8) | (chip8->memory[chip8->cpu.PC + 1]);
-    chip8->cpu.PC += 2;
+    opcode = (chip8->memory[cpu->PC] << 8) | (chip8->memory[cpu->PC + 1]);
+    cpu->PC += 2;
 
     addr = opcode & 0x0FFF;
     X = (opcode & 0x0F00) >> 8;
@@ -287,69 +295,69 @@ static void priv_update_chip8(chip8_t* chip8) {
     n = opcode & 0x000F;
     kk = opcode & 0x00FF;
 
-    switch (opcode & 0xF000) {
-        case 0x0000:
+    switch ((opcode & 0xF000) >> 12) {
+        case 0x0:
             if (opcode == 0x00E0) {                                             /* CLS */
                 priv_clear_display(chip8->display);
             } else if (opcode == 0x00EE) {                                      /* RET */
-                chip8->cpu.SP--;
-                chip8->cpu.PC = chip8->cpu.stack[chip8->cpu.SP & 0xF];
+                cpu->SP--;
+                cpu->PC = cpu->stack[cpu->SP & 0xF];
             }
             break;
-        case 0x1000:                                                            /* JMP addr */
-            chip8->cpu.PC = addr;
+        case 0x1:                                                            /* JMP addr */
+            cpu->PC = addr;
             break;
-        case 0x2000:                                                            /* CALL addr */
-            chip8->cpu.stack[chip8->cpu.SP & 0xF] = chip8->cpu.PC;
-            chip8->cpu.SP++;
-            chip8->cpu.PC = addr;
+        case 0x2:                                                            /* CALL addr */
+            cpu->stack[cpu->SP & 0xF] = cpu->PC;
+            cpu->SP++;
+            cpu->PC = addr;
             break;
-        case 0x3000:                                                            /* SE V, byte */
-            if (chip8->cpu.V[X] == kk) {
-                chip8->cpu.PC += 2;
+        case 0x3:                                                            /* SE V, byte */
+            if (cpu->V[X] == kk) {
+                cpu->PC += 2;
             }
             break;
-        case 0x4000:                                                            /* SNE V, byte */
-            if (chip8->cpu.V[X] != kk) {
-                chip8->cpu.PC += 2;
+        case 0x4:                                                            /* SNE V, byte */
+            if (cpu->V[X] != kk) {
+                cpu->PC += 2;
             }
             break;
-        case 0x5000:                                                            /* SE Vx, Vy */
-            if (n == 0x0 && chip8->cpu.V[X] == chip8->cpu.V[Y]) {
-                chip8->cpu.PC += 2;
+        case 0x5:                                                            /* SE Vx, Vy */
+            if (n == 0x0 && cpu->V[X] == cpu->V[Y]) {
+                cpu->PC += 2;
             }
             break;
-        case 0x6000:                                                            /* LD Vx, byte */
-            chip8->cpu.V[X] = kk;
+        case 0x6:                                                            /* LD Vx, byte */
+            cpu->V[X] = kk;
             break;
-        case 0x7000:                                                            /* ADD Vx, byte */
-            chip8->cpu.V[X] += kk;
+        case 0x7:                                                            /* ADD Vx, byte */
+            cpu->V[X] += kk;
             break;
-        case 0x8000:                                                            /* see priv_8XYn() */
+        case 0x8:                                                            /* see priv_8XYn() */
             priv_8XYn(chip8, X, Y, opcode & 0xF);
             break;
-        case 0x9000:                                                            /* SNE Vx, Vy */
-            if (n == 0x0 && chip8->cpu.V[X] != chip8->cpu.V[Y]) {
-                chip8->cpu.PC += 2;
+        case 0x9:                                                            /* SNE Vx, Vy */
+            if (n == 0x0 && cpu->V[X] != cpu->V[Y]) {
+                cpu->PC += 2;
             }
             break;
-        case 0xA000:                                                            /* LD I, addr */
-            chip8->cpu.I = addr;
+        case 0xA:                                                            /* LD I, addr */
+            cpu->I = addr;
             break;
-        case 0xB000:                                                            /* JP V0, addr */
-            chip8->cpu.PC = addr + chip8->cpu.V[0x0];
+        case 0xB:                                                            /* JP V0, addr */
+            cpu->PC = addr + cpu->V[0x0];
             break;
-        case 0xC000:                                                            /* RND Vx, byte */
+        case 0xC:                                                            /* RND Vx, byte */
             uint8_t r = rand() % 0x100;
-            chip8->cpu.V[X] = r & kk;
+            cpu->V[X] = r & kk;
             break;
-        case 0xD000:                                                            /* see priv_DXYn() */
+        case 0xD:                                                            /* see priv_DXYn() */
             priv_DXYn(chip8, X, Y, n);
             break;
-        case 0xE000:                                                            /* see priv_EXnn() */
+        case 0xE:                                                            /* see priv_EXnn() */
             priv_Exnn(chip8, X, kk);
             break;
-        case 0xF000:                                                            /* see priv_FXnn() */
+        case 0xF:                                                            /* see priv_FXnn() */
             priv_FXnn(chip8, X, opcode & 0x00FF);
             break;
         default:
@@ -357,7 +365,7 @@ static void priv_update_chip8(chip8_t* chip8) {
     }
 }
 
-static void priv_render(chip8_t* chip8) {               /* execute when display is modified */
+static void priv_render(chip8_t* chip8) {                                       /* execute when display is modified */
     if (chip8->rendering_mode == CLI || chip8->rendering_mode == DEBUG) {
         cli_print_display(chip8->display);
     } else if (chip8->rendering_mode == GUI) {
@@ -425,7 +433,7 @@ void chip8_main_loop(chip8_t* chip8) {
 
     while (chip8->running) {
         priv_update_chip8(chip8);
-        priv_update_based_on_fps(&last_60Hz_update, UPDATE_RATE_60Hz, priv_60Hz_update, chip8);
+        priv_delayed_update(&last_60Hz_update, UPDATE_RATE_60Hz, priv_60Hz_update, chip8);
 
         usleep(1000000 / UPDATE_RATE_chip8);
     }
