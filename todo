@@ -1,16 +1,16 @@
 => command line argumment parsing:
-	-> -u --usage			(print usage)
 	-> -h --help			(print help)
-	-> -r --rom [path]		(defaut argument)
-	-> --gui				(use GUI window, default)
-	-> --cli				(display in the terminal)
+	-> -G --GUI				(use GUI window, default)
+	-> -C --CLI				(display in the terminal)
+	-> -D --DEBUG 			(show debug information)
 	-> -s --scale [amount]	(set window scale, GUI only)
 	-> -g --grid 			(show pixel gird, GUI only)
-	-> -d --debug 			(show debug information)
 
 => Rendering 
  OK -> SDL2
  OK -> CLI
+	-> GUI add option to show grid
+	-> change SDL2 for raylib
 
 => debug (in CLI)
 	-> stop, steb-by-step
