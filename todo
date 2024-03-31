@@ -9,7 +9,7 @@
 	-> -d --debug 			(show debug information)
 
 => Rendering 
-	-> SDL2
+ OK -> SDL2
  OK -> CLI
 
 => debug (in CLI)
@@ -19,7 +19,6 @@
 
 => inputs
 	-> add CLI keyboard suport
-	-> add GUI keyboard suport
-	-> add opcode keyboard suport
+ OK -> add GUI keyboard suport
 
 => Disasembler
