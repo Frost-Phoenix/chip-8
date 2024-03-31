@@ -73,7 +73,11 @@ void gui_poll_events(gui_t* gui, uint16_t* keys_state) {
                 gui->running = FALSE;
                 break;
             case SDL_KEYDOWN:
-                BIT_SET(*keys_state, get_key(gui->event.key.keysym.sym));
+                if (gui->event.key.keysym.sym == SDLK_ESCAPE) {
+                    gui->running = FALSE;
+                } else {
+                    BIT_SET(*keys_state, get_key(gui->event.key.keysym.sym));
+                }
                 break;
             case SDL_KEYUP:
                 BIT_CLEAR(*keys_state, get_key(gui->event.key.keysym.sym));
