@@ -2,6 +2,7 @@
 
 #include <unistd.h>
 #include <termios.h>
+#include <sys/select.h>
 
 #include "common.h"
 
@@ -27,6 +28,25 @@ static void priv_set_buffered_input(int enable) {
         tcsetattr(STDIN_FILENO, TCSANOW, &new);                             /* set the new settings immediately */
         enabled = 0;
     }
+}
+
+static uint16_t priv_get_key_pressed() {
+    int key = 0;
+    fd_set read_fds;
+    struct timeval timeout;
+
+    FD_ZERO(&read_fds);
+    FD_SET(STDIN_FILENO, &read_fds);
+
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+
+    if (select(STDIN_FILENO + 1, &read_fds, NULL, NULL, &timeout) > 0) {
+        key = getchar();
+        fflush(stdin);
+    }
+
+    return key;
 }
 
 static void priv_display_VX_registers(const chip8_t* chip8) {
@@ -119,6 +139,12 @@ void cli_quit() {
     priv_set_buffered_input(TRUE);
 }
 
+uint16_t cli_get_keys() {
+    char key = priv_get_key_pressed();
+
+    return key != 0 ? 1 << get_key(key) : 0;
+}
+
 void cli_print_memory(const chip8_t* chip8) {
     for (size_t i = 0; i < MEMORY_SIZE; i++) {
         if (i % 32 == 0) {
@@ -136,9 +162,9 @@ void cli_print_memory(const chip8_t* chip8) {
 
 void cli_print_display(const uint8_t* display) {
     MOVE_CURSOR(0, 0);
-    PRINT_BOLD("┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓Game┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n");
+    PRINT_BOLD("╔═════════════════════════════╗Chip-8╔═════════════════════════════╗\n");
     for (size_t r = 0; r < WIN_HEIGHT; r += 2) {
-        printf("┃ ");
+        printf("║ ");
         for (size_t c = 0; c < WIN_WIDTH; c++) {
             SET_BG_COLOR(BLACK);
             SET_TEXT_COLOR(BLACK);
@@ -153,9 +179,9 @@ void cli_print_display(const uint8_t* display) {
             printf("▄");
         }
         RESET_FORMATING();
-        printf(" ┃\n");
+        printf(" ║\n");
     }
-    printf("┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n");
+    printf("╚══════════════════════════════════════════════════════════════════╝\n");
 
     RESET_FORMATING();
 }

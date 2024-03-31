@@ -115,15 +115,25 @@ static void priv_update_timers(chip8_t* chip8) {
 static void priv_60Hz_update(chip8_t* chip8) {
     priv_update_timers(chip8);
 
-    if (chip8->rendering_mode == DEBUG) {
-        cli_print_debug_info(chip8);
-    } else if (chip8->rendering_mode == GUI) {
-        chip8->keys_last_state = chip8->keys_current_state;
-        gui_poll_events(chip8->gui, &chip8->keys_current_state);
+    chip8->keys_last_state = chip8->keys_current_state;
 
-        if (chip8->gui->running == FALSE) {
-            chip8->running = FALSE;
-        }
+    switch (chip8->rendering_mode) {
+        case GUI:
+            gui_poll_events(chip8->gui, &chip8->keys_current_state);
+
+            if (chip8->gui->running == FALSE) {
+                chip8->running = FALSE;
+            }
+            break;
+        case CLI:
+            chip8->keys_current_state = cli_get_keys();
+            break;
+        case DEBUG:
+            chip8->keys_current_state = cli_get_keys();
+            cli_print_debug_info(chip8);
+            break;
+        default:
+            break;
     }
 }
 
