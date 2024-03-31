@@ -1,11 +1,3 @@
-=> command line argumment parsing:
-	-> -h --help			(print help)
-	-> -G --GUI				(use GUI window, default)
-	-> -C --CLI				(display in the terminal)
-	-> -D --DEBUG 			(show debug information)
-	-> -s --scale [amount]	(set window scale, GUI only)
-	-> -g --grid 			(show pixel gird, GUI only)
-
 => Rendering 
  OK -> SDL2
  OK -> CLI
@@ -18,7 +10,7 @@
  OK	-> show dilsplay in terminal
 
 => inputs
-	-> add CLI keyboard suport
+    -> add CLI keyboard suport
  OK -> add GUI keyboard suport
 
 => Disasembler
