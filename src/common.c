@@ -21,7 +21,7 @@ struct option long_options [] = {
  *                 Private functions                  *
  ******************************************************/
 
-void priv_help() {
+static void priv_help() {
     printf("Usage: ./chip-8 <rom_path> [OPTIONS]\n\n");
     printf("Description:\n");
     printf("  Run the CHIP-8 emulator with the specified ROM file.\n\n");
