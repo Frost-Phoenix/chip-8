@@ -173,7 +173,7 @@ static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
             break;
         case 0xE:                                                               /* SHL Vx {, Vy} */
             chip8->cpu.V[X] = chip8->cpu.V[Y];
-            flag = (chip8->cpu.V[X] >> 3) & 0x01;
+            flag = (chip8->cpu.V[X] >> 7) & 0x01;
             chip8->cpu.V[X] <<= 1;
             chip8->cpu.V[0xF] = flag;
             break;
@@ -223,7 +223,7 @@ static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
             chip8->cpu.I += chip8->cpu.V[X];
             break;
         case 0x29:                                                              /* LD F, Vx */
-            chip8->cpu.I = chip8->cpu.V[X];
+            chip8->cpu.I = FONT_START_ADR + (chip8->cpu.V[X] & 0xF) * 5;
             break;
         case 0x33:                                                              /* LD B, Vx */
             chip8->memory[chip8->cpu.I + 0] = chip8->cpu.V[X] / 100;
@@ -315,7 +315,7 @@ static void priv_update_chip8(chip8_t* chip8) {
             }
             break;
         case 0x5000:                                                            /* SE Vx, Vy */
-            if (chip8->cpu.V[X] == chip8->cpu.V[Y]) {
+            if (n == 0x0 && chip8->cpu.V[X] == chip8->cpu.V[Y]) {
                 chip8->cpu.PC += 2;
             }
             break;
@@ -329,7 +329,7 @@ static void priv_update_chip8(chip8_t* chip8) {
             priv_8XYn(chip8, X, Y, opcode & 0xF);
             break;
         case 0x9000:                                                            /* SNE Vx, Vy */
-            if (chip8->cpu.V[X] != chip8->cpu.V[Y]) {
+            if (n == 0x0 && chip8->cpu.V[X] != chip8->cpu.V[Y]) {
                 chip8->cpu.PC += 2;
             }
             break;
