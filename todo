@@ -10,7 +10,7 @@
  OK	-> show dilsplay in terminal
 
 => inputs
-    -> add CLI keyboard suport
+ OK -> add CLI keyboard suport
  OK -> add GUI keyboard suport
 
 => Disasembler
