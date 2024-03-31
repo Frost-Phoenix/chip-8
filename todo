@@ -4,13 +4,11 @@
 	-> GUI add option to show grid
 	-> change SDL2 for raylib
 
+=> audio
+
 => debug (in CLI)
 	-> stop, steb-by-step
  OK	-> show all register (Vx DT ST I SP PC) + stack content
  OK	-> show dilsplay in terminal
-
-=> inputs
- OK -> add CLI keyboard suport
- OK -> add GUI keyboard suport
 
 => Disasembler
