@@ -379,7 +379,7 @@ static void priv_render(chip8_t* chip8) {                                       
  *                 Public functions                   *
  ******************************************************/
 
-chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode) {
+chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale) {
     chip8_t* chip8;
 
     chip8 = calloc(1, sizeof(chip8_t));
@@ -401,8 +401,8 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode) {
             chip8->gui,
             "Chip8", SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
-            WIN_WIDTH * WIN_SCALE,
-            WIN_HEIGHT * WIN_SCALE,
+            WIN_WIDTH * scale,
+            WIN_HEIGHT * scale,
             SDL_WINDOW_SHOWN
         );
     }
@@ -433,8 +433,8 @@ void chip8_main_loop(chip8_t* chip8) {
 
     while (chip8->running) {
         priv_update_chip8(chip8);
-        priv_delayed_update(&last_60Hz_update, UPDATE_RATE_60Hz, priv_60Hz_update, chip8);
+        priv_delayed_update(&last_60Hz_update, UPDATE_RATE_60HZ, priv_60Hz_update, chip8);
 
-        usleep(1000000 / UPDATE_RATE_chip8);
+        usleep(1000000 / UPDATE_RATE_CHIP8);
     }
 }

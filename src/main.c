@@ -1,27 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
+#include "common.h"
 #include "chip8.h"
 
 
-int main() {
-    puts("chip-8");
+int main(int argc, char* argv []) {
+    chip8_t* chip8;
+    args_t args = { 0 };
 
-    // chip8_t* chip8 = chip8_init("rom/test/1-chip8-logo.ch8", DEBUG);
-    // chip8_t* chip8 = chip8_init("rom/test/2-ibm-logo.ch8", DEBUG);
-    // chip8_t* chip8 = chip8_init("rom/test/3-corax+.ch8", DEBUG);
-    // chip8_t* chip8 = chip8_init("rom/test/4-flags.ch8", DEBUG);
-    // chip8_t* chip8 = chip8_init("rom/test/1-chip8-logo.ch8", GUI);
-    // chip8_t* chip8 = chip8_init("rom/test/2-ibm-logo.ch8", GUI);
-    // chip8_t* chip8 = chip8_init("rom/test/3-corax+.ch8", GUI);
-    // chip8_t* chip8 = chip8_init("rom/test/4-flags.ch8", GUI);
-    // chip8_t* chip8 = chip8_init("rom/test/5-quirks.ch8", GUI);
-    // chip8_t* chip8 = chip8_init("rom/test/6-keypad.ch8", GUI);
-    // chip8_t* chip8 = chip8_init("rom/test/test_opcode.ch8", GUI);
-    // chip8_t* chip8 = chip8_init("rom/games/Breakout [Carmelo Cortez, 1979].ch8", GUI);
-    chip8_t* chip8 = chip8_init("rom/games/Tetris [Fran Dachille, 1991].ch8", GUI);
+    parse_args(argc, argv, &args);
+
+    chip8 = chip8_init(args.rom_path, args.rendering_mode, args.scale);
     chip8_main_loop(chip8);
     chip8_quit(chip8);
 
-    return EXIT_SUCCESS;
+    exit(EXIT_SUCCESS);
 }
