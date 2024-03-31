@@ -6,7 +6,7 @@
 #include <getopt.h>
 
 
-struct option long_options [] = {
+static const struct option long_options [] = {
     {"help", no_argument, 0, 'h'},
     {"CLI", no_argument, 0, 'C'},
     {"GUI", no_argument, 0, 'G'},
