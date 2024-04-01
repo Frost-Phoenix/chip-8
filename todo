@@ -1,5 +1,3 @@
-=> audio
-
 => debug (in CLI)
 	-> stop, steb-by-step
  OK	-> show all register (Vx DT ST I SP PC) + stack content
