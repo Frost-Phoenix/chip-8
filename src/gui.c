@@ -25,6 +25,8 @@ static const char keys[NB_KEYS] = {
 void gui_init(gui_t* gui, const char* title, int width, int height) {
     Image img;
 
+    SetTraceLogLevel(LOG_ERROR);
+
     InitWindow(width, height, title);
     SetExitKey(KEY_ESCAPE);
 
