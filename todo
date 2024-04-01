@@ -1,9 +1,3 @@
-=> Rendering 
- OK -> SDL2
- OK -> CLI
-	-> GUI add option to show grid
- OK -> change SDL2 for raylib
-
 => audio
 
 => debug (in CLI)
