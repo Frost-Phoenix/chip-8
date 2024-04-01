@@ -287,8 +287,9 @@ static void priv_DXYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
         ++y;
     }
 
-    chip8->wait_next_frame = TRUE;
-
+    if (chip8->ips == DEFAULT_UPDATE_RATE_CHIP8) {
+        chip8->wait_next_frame = TRUE;
+    }
     if (chip8->rendering_mode == CLI || chip8->rendering_mode == DEBUG) {
         priv_render(chip8);
     }
@@ -394,7 +395,7 @@ static void priv_render(chip8_t* chip8) {                                       
  *                 Public functions                   *
  ******************************************************/
 
-chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale, int show_grid) {
+chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale, int show_grid, int ips) {
     chip8_t* chip8;
 
     chip8 = calloc(1, sizeof(chip8_t));
@@ -417,6 +418,7 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale, int 
 
     chip8->cpu.PC = 0x200;
     chip8->wait_next_frame = FALSE;
+    chip8->ips = ips == 0 ? DEFAULT_UPDATE_RATE_CHIP8 : ips;
     chip8->running = TRUE;
 
     srand(time(NULL));
@@ -445,6 +447,6 @@ void chip8_main_loop(chip8_t* chip8) {
         priv_update_chip8(chip8);
         priv_delayed_update(chip8, &last_60Hz_update, UPDATE_RATE_60HZ);
 
-        usleep(1000000 / UPDATE_RATE_CHIP8);
+        usleep(1000000 / chip8->ips);
     }
 }

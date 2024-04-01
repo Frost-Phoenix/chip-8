@@ -11,6 +11,7 @@ static const struct option long_options [] = {
     {"CLI", no_argument, 0, 'C'},
     {"GUI", no_argument, 0, 'G'},
     {"DEBUG", no_argument, 0, 'D'},
+    {"ips", required_argument, 0, 'i'},
     {"scale", required_argument, 0, 's'},
     {"grid", no_argument, 0, 'g'},
     {0, 0, 0, 0}
@@ -31,8 +32,9 @@ static void priv_help() {
     printf("  -C, --CLI                Run in CLI mode.\n");
     printf("  -G, --GUI                Run in GUI mode.\n");
     printf("  -D, --DEBUG              Run in debug mode.\n");
+    printf("  -i, --ips <amount>       Number of Chip-8 instructions per seconds (default 900).\n");
     printf("\n  GUI only:\n");
-    printf("  -s, --scale <amount>     Scale the display by the specified amount.\n");
+    printf("  -s, --scale <amount>     Scale the display by the specified amount (default 10).\n");
     printf("  -g, --grid               Show grid on the display.\n\n");
     printf("Miscellaneous:\n");
     printf("  -h, --help               Display this help message and exit.\n");
@@ -40,17 +42,18 @@ static void priv_help() {
     exit(EXIT_SUCCESS);
 }
 
-static int priv_get_scale(char* input) {
-    int scale;
+static int priv_to_int(char* input) {
+    int res;
     char* end;
 
-    scale = strtol(input, &end, 10);
+    res = strtol(input, &end, 10);
 
     if (*end != '\0') {
+        printf("%serror:%s not a number.\n", "\033[1;31m", "\033[0m");
         exit(EXIT_FAILURE);
     }
 
-    return scale;
+    return res;
 }
 
 /******************************************************
@@ -96,9 +99,10 @@ void parse_args(int argc, char* argv [], args_t* args) {
 
     args->scale = WIN_DEFAULT_SCALE;
     args->show_grid = FALSE;
+    args->ips = 0;
     args->rom_path = argv[1];
 
-    while ((opt = getopt_long(argc, argv, "hCGDs:g", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hCGDi:s:g", long_options, NULL)) != -1) {
         switch (opt) {
             case 'h':
                 priv_help();
@@ -112,8 +116,11 @@ void parse_args(int argc, char* argv [], args_t* args) {
             case 'D':
                 args->rendering_mode = DEBUG;
                 break;
+            case 'i':
+                args->ips = priv_to_int(optarg);
+                break;
             case 's':
-                args->scale = priv_get_scale(optarg);
+                args->scale = priv_to_int(optarg);
                 break;
             case 'g':
                 args->show_grid = TRUE;
@@ -122,7 +129,7 @@ void parse_args(int argc, char* argv [], args_t* args) {
                 printf("option needs a value\n");
                 break;
             case '?':
-                printf("%serror:%s unrecognised flag '%s-%c%s'\n", "\033[1;31m", "\033[0m", "\033[1;35m", optopt, "\033[0m");
+                printf("%serror:%s unrecognised flag.\n", "\033[1;31m", "\033[0m");
                 printf("Try '%s --help' for more information.\n", argv[0]);
                 exit(EXIT_FAILURE);
             default:

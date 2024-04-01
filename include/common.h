@@ -34,9 +34,8 @@ typedef enum {
 
 typedef struct args {
     char* rom_path;
-    int scale;
     rendering_mode_t rendering_mode;
-    int show_grid;
+    int scale, show_grid, ips;
 } args_t;
 
 

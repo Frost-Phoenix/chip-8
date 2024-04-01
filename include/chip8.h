@@ -7,7 +7,7 @@
 #include "gui.h"
 
 
-#define UPDATE_RATE_CHIP8 900
+#define DEFAULT_UPDATE_RATE_CHIP8 900
 #define UPDATE_RATE_60HZ   60
 
 #define MEMORY_SIZE      4096
@@ -31,6 +31,7 @@ typedef struct cpu {
 
 typedef struct chip8 {
     int running;
+    int ips;
 
     cpu_t cpu;
     uint8_t memory[MEMORY_SIZE];
@@ -45,7 +46,7 @@ typedef struct chip8 {
 } chip8_t;
 
 
-chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale, int show_grid);
+chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale, int show_grid, int ips);
 void chip8_quit(chip8_t* chip8);
 
 void chip8_main_loop(chip8_t* chip8);
