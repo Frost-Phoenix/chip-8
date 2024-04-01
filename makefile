@@ -12,7 +12,7 @@ endif
 
 CC := gcc
 CFLAGS := -std=$(CSTD) -Wall -Wextra -Werror
-LIBS   = -lSDL2
+LIBS   = -lraylib
 DEBUG_FLAGS := -fsanitize=address,undefined
 RELEASE_FLAGS := -O2
 

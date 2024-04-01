@@ -34,7 +34,7 @@ typedef struct chip8 {
 
     cpu_t cpu;
     uint8_t memory[MEMORY_SIZE];
-    uint8_t display[WIN_WIDTH * WIN_HEIGHT];
+    uint8_t display[CHIP8_DISPLAY_WIDTH * CHIP8_DISPLAY_HEIGHT];
 
     uint16_t keys_last_state;
     uint16_t keys_current_state;

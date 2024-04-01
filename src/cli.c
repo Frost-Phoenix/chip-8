@@ -24,7 +24,7 @@ static void priv_set_buffered_input(int enable) {
         tcgetattr(STDIN_FILENO, &new);                                      /* get the terminal settings for standard input */
         printf("\033[?25l\033[2J");                                         /* make cursor invisible, clear screen */
         old = new;                                                          /* keep old setting to restore them at the end */
-        new.c_lflag &= (~ICANON & ~ECHO);                                   /* disable canonical mode (buffered i/o) and local echo */
+        new.c_lflag &= (~ICANON & ~ECHO);                                   /* disable canonical mode (buffeRED_CLI i/o) and local echo */
         tcsetattr(STDIN_FILENO, TCSANOW, &new);                             /* set the new settings immediately */
         enabled = 0;
     }
@@ -50,7 +50,7 @@ static uint16_t priv_get_key_pressed() {
 }
 
 static void priv_display_VX_registers(const chip8_t* chip8) {
-    color_t color = GREEN;
+    color_t color = GREEN_CLI;
 
     SET_TEXT_COLOR(color);
     MOVE_CURSOR(20, 5);
@@ -72,7 +72,7 @@ static void priv_display_VX_registers(const chip8_t* chip8) {
 }
 
 static void priv_display_stack(const chip8_t* chip8) {
-    color_t color = RED;
+    color_t color = RED_CLI;
 
     SET_TEXT_COLOR(color);
     MOVE_CURSOR(20, 23);
@@ -94,7 +94,7 @@ static void priv_display_stack(const chip8_t* chip8) {
 }
 
 static void priv_display_cpu(const chip8_t* chip8) {
-    color_t color = BLUE;
+    color_t color = BLUE_CLI;
 
     SET_TEXT_COLOR(color);
     MOVE_CURSOR(20, 44);
@@ -163,17 +163,17 @@ void cli_print_memory(const chip8_t* chip8) {
 void cli_print_display(const uint8_t* display) {
     MOVE_CURSOR(0, 0);
     PRINT_BOLD("╔═════════════════════════════╗Chip-8╔═════════════════════════════╗\n");
-    for (size_t r = 0; r < WIN_HEIGHT; r += 2) {
+    for (size_t r = 0; r < CHIP8_DISPLAY_HEIGHT; r += 2) {
         printf("║ ");
-        for (size_t c = 0; c < WIN_WIDTH; c++) {
-            SET_BG_COLOR(BLACK);
-            SET_TEXT_COLOR(BLACK);
+        for (size_t c = 0; c < CHIP8_DISPLAY_WIDTH; c++) {
+            SET_BG_COLOR(BLACK_CLI);
+            SET_TEXT_COLOR(BLACK_CLI);
 
-            if (display[r * WIN_WIDTH + c] == 1) {
-                SET_BG_COLOR(WHITE);
+            if (display[r * CHIP8_DISPLAY_WIDTH + c] == 1) {
+                SET_BG_COLOR(WHITE_CLI);
             }
-            if (display[(r + 1) * WIN_WIDTH + c] == 1) {
-                SET_TEXT_COLOR(WHITE);
+            if (display[(r + 1) * CHIP8_DISPLAY_WIDTH + c] == 1) {
+                SET_TEXT_COLOR(WHITE_CLI);
             }
 
             printf("▄");

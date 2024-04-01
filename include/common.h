@@ -6,8 +6,8 @@
 #define FALSE 0
 
 #define WIN_DEFAULT_SCALE   10
-#define WIN_WIDTH   64
-#define WIN_HEIGHT  32
+#define CHIP8_DISPLAY_WIDTH   64
+#define CHIP8_DISPLAY_HEIGHT  32
 
 #define BIT_CHECK(X, N) ((X) & (1 << (N)))
 #define BIT_SET(X, N)   ((X) |= (1 << (N)))

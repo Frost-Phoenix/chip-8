@@ -87,20 +87,6 @@ static void priv_signal_callback_handler() {
     exit(EXIT_SUCCESS);
 }
 
-static void priv_delayed_update(struct timespec* last_update_time, const double target_fps, void(*update)(chip8_t*), chip8_t* chip8) {
-    struct timespec current_time;
-    double elapsed_time;
-
-    clock_gettime(CLOCK_MONOTONIC, &current_time);
-    elapsed_time = (double)(current_time.tv_sec - last_update_time->tv_sec) * 1.0e9 + (double)(current_time.tv_nsec - last_update_time->tv_nsec);
-    elapsed_time /= 1.0e9;
-
-    if (elapsed_time >= 1.0 / target_fps) {
-        update(chip8);
-        *last_update_time = current_time;
-    }
-}
-
 static void priv_update_timers(chip8_t* chip8) {
     cpu_t* cpu = &chip8->cpu;
 
@@ -112,7 +98,18 @@ static void priv_update_timers(chip8_t* chip8) {
     }
 }
 
-static void priv_60Hz_update(chip8_t* chip8) {
+static void priv_delayed_update(chip8_t* chip8, struct timespec* last_update_time, const double target_fps) {
+    struct timespec current_time;
+    double elapsed_time;
+
+    clock_gettime(CLOCK_MONOTONIC, &current_time);
+    elapsed_time = (double)(current_time.tv_sec - last_update_time->tv_sec) * 1.0e9 + (double)(current_time.tv_nsec - last_update_time->tv_nsec);
+    elapsed_time /= 1.0e9;
+
+    if (elapsed_time < 1.0 / target_fps) return;
+
+    *last_update_time = current_time;
+
     priv_update_timers(chip8);
 
     chip8->keys_last_state = chip8->keys_current_state;
@@ -138,7 +135,7 @@ static void priv_60Hz_update(chip8_t* chip8) {
 }
 
 static void priv_clear_display(uint8_t* display) {
-    memset(display, 0, WIN_WIDTH * WIN_HEIGHT);
+    memset(display, 0, CHIP8_DISPLAY_WIDTH * CHIP8_DISPLAY_HEIGHT);
 }
 
 static void priv_8XYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
@@ -265,18 +262,18 @@ static void priv_DXYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
     cpu_t* cpu = &chip8->cpu;
     uint8_t x, y;
 
-    x = cpu->V[X] % WIN_WIDTH;
-    y = cpu->V[Y] % WIN_HEIGHT;
+    x = cpu->V[X] % CHIP8_DISPLAY_WIDTH;
+    y = cpu->V[Y] % CHIP8_DISPLAY_HEIGHT;
     cpu->V[0xF] = 0;
 
     for (size_t i = 0; i < n; ++i) {
-        if (y >= WIN_HEIGHT) { break; }
+        if (y >= CHIP8_DISPLAY_HEIGHT) { break; }
 
         uint8_t byte = chip8->memory[cpu->I + i];
         for (size_t j = 0; j < 8; ++j) {
-            if (x + j >= WIN_WIDTH) { break; }
+            if (x + j >= CHIP8_DISPLAY_WIDTH) { break; }
 
-            size_t pos = y * WIN_WIDTH + (x + j);
+            size_t pos = y * CHIP8_DISPLAY_WIDTH + (x + j);
             uint8_t pixel = (byte >> (7 - j)) & 1;
 
             if (pixel == 1 && chip8->display[pos] == 1) {
@@ -407,14 +404,7 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale) {
         cli_init();
     } else if (mode == GUI) {
         chip8->gui = malloc(sizeof(gui_t));
-        gui_init(
-            chip8->gui,
-            "Chip8", SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED,
-            WIN_WIDTH * scale,
-            WIN_HEIGHT * scale,
-            SDL_WINDOW_SHOWN
-        );
+        gui_init(chip8->gui, "Chip8", CHIP8_DISPLAY_WIDTH * scale, CHIP8_DISPLAY_HEIGHT * scale);
     }
 
     chip8->running = TRUE;
@@ -431,7 +421,7 @@ void chip8_quit(chip8_t* chip8) {
     if (chip8->rendering_mode == CLI || chip8->rendering_mode == DEBUG) {
         cli_quit();
     } else if (chip8->rendering_mode == GUI) {
-        gui_quit(chip8->gui);
+        gui_quit();
         free(chip8->gui);
     }
 
@@ -443,7 +433,7 @@ void chip8_main_loop(chip8_t* chip8) {
 
     while (chip8->running) {
         priv_update_chip8(chip8);
-        priv_delayed_update(&last_60Hz_update, UPDATE_RATE_60HZ, priv_60Hz_update, chip8);
+        priv_delayed_update(chip8, &last_60Hz_update, UPDATE_RATE_60HZ);
 
         usleep(1000000 / UPDATE_RATE_CHIP8);
     }

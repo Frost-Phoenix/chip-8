@@ -17,14 +17,14 @@
 
 
 typedef enum {
-    BLACK,
-    RED,
-    GREEN,
-    YELLOW,
-    BLUE,
-    MAGENTA,
-    CYAN,
-    WHITE
+    BLACK_CLI,
+    RED_CLI,
+    GREEN_CLI,
+    YELLOW_CLI,
+    BLUE_CLI,
+    MAGENTA_CLI,
+    CYAN_CLI,
+    WHITE_CLI,
 } color_t;
 
 
