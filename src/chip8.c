@@ -112,6 +112,7 @@ static void priv_delayed_update(chip8_t* chip8, struct timespec* last_update_tim
 
     priv_update_timers(chip8);
 
+    chip8->wait_next_frame = FALSE;
     chip8->keys_last_state = chip8->keys_current_state;
 
     switch (chip8->rendering_mode) {
@@ -286,12 +287,16 @@ static void priv_DXYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
         ++y;
     }
 
+    chip8->wait_next_frame = TRUE;
+
     if (chip8->rendering_mode == CLI || chip8->rendering_mode == DEBUG) {
         priv_render(chip8);
     }
 }
 
 static void priv_update_chip8(chip8_t* chip8) {
+    if (chip8->wait_next_frame) return;
+
     cpu_t* cpu = &chip8->cpu;
     uint16_t opcode, addr;
     uint8_t n, X, Y, kk;
@@ -399,9 +404,9 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale, int 
     }
 
     priv_load_rom(chip8, rom_path);
-    chip8->cpu.PC = 0x200;
-    chip8->rendering_mode = mode;
     memcpy(chip8->memory + FONT_START_ADR, font, FONT_SIZE);
+
+    chip8->rendering_mode = mode;
 
     if (mode == CLI || mode == DEBUG) {
         cli_init();
@@ -410,6 +415,8 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale, int 
         gui_init(chip8->gui, "Chip8", scale, show_grid);
     }
 
+    chip8->cpu.PC = 0x200;
+    chip8->wait_next_frame = FALSE;
     chip8->running = TRUE;
 
     srand(time(NULL));

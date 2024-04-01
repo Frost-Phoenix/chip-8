@@ -40,6 +40,7 @@ typedef struct chip8 {
     uint16_t keys_current_state;
 
     gui_t* gui;
+    int wait_next_frame;
     rendering_mode_t rendering_mode;
 } chip8_t;
 
