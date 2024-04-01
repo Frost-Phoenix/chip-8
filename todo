@@ -2,7 +2,7 @@
  OK -> SDL2
  OK -> CLI
 	-> GUI add option to show grid
-	-> change SDL2 for raylib
+ OK -> change SDL2 for raylib
 
 => audio
 
