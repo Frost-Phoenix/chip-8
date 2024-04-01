@@ -44,7 +44,7 @@ typedef struct chip8 {
 } chip8_t;
 
 
-chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale);
+chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale, int show_grid);
 void chip8_quit(chip8_t* chip8);
 
 void chip8_main_loop(chip8_t* chip8);

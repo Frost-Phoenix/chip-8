@@ -12,7 +12,7 @@ int main(int argc, char* argv []) {
 
     parse_args(argc, argv, &args);
 
-    chip8 = chip8_init(args.rom_path, args.rendering_mode, args.scale);
+    chip8 = chip8_init(args.rom_path, args.rendering_mode, args.scale, args.show_grid);
     chip8_main_loop(chip8);
     chip8_quit(chip8);
 

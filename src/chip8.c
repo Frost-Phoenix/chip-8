@@ -117,6 +117,7 @@ static void priv_delayed_update(chip8_t* chip8, struct timespec* last_update_tim
     switch (chip8->rendering_mode) {
         case GUI:
             gui_poll_events(chip8->gui, &chip8->keys_current_state);
+            priv_render(chip8);
 
             if (chip8->gui->running == FALSE) {
                 chip8->running = FALSE;
@@ -285,7 +286,9 @@ static void priv_DXYn(chip8_t* chip8, uint8_t X, uint8_t Y, uint8_t n) {
         ++y;
     }
 
-    priv_render(chip8);
+    if (chip8->rendering_mode == CLI || chip8->rendering_mode == DEBUG) {
+        priv_render(chip8);
+    }
 }
 
 static void priv_update_chip8(chip8_t* chip8) {
@@ -386,7 +389,7 @@ static void priv_render(chip8_t* chip8) {                                       
  *                 Public functions                   *
  ******************************************************/
 
-chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale) {
+chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale, int show_grid) {
     chip8_t* chip8;
 
     chip8 = calloc(1, sizeof(chip8_t));
@@ -404,7 +407,7 @@ chip8_t* chip8_init(const char* rom_path, rendering_mode_t mode, int scale) {
         cli_init();
     } else if (mode == GUI) {
         chip8->gui = malloc(sizeof(gui_t));
-        gui_init(chip8->gui, "Chip8", CHIP8_DISPLAY_WIDTH * scale, CHIP8_DISPLAY_HEIGHT * scale);
+        gui_init(chip8->gui, "Chip8", scale, show_grid);
     }
 
     chip8->running = TRUE;

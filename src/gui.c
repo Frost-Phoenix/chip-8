@@ -18,16 +18,29 @@ static const char keys[NB_KEYS] = {
 };
 
 
+static void priv_draw_grid(gui_t* gui) {
+    int scale = gui->scale;
+    Color color = (Color){ 24, 24, 37, 255 };
+
+    for (size_t i = 0; i < CHIP8_DISPLAY_WIDTH; i++) {
+        DrawLine(i * scale, 0, i * scale, CHIP8_DISPLAY_HEIGHT * scale, color);
+    }
+    for (size_t i = 0; i < CHIP8_DISPLAY_HEIGHT; i++) {
+        DrawLine(0, i * scale, CHIP8_DISPLAY_WIDTH * scale, i * scale, color);
+    }
+}
+
+
 /******************************************************
  *                 Public functions                   *
  ******************************************************/
 
-void gui_init(gui_t* gui, const char* title, int width, int height) {
+void gui_init(gui_t* gui, const char* title, int scale, int show_grid) {
     Image img;
 
     SetTraceLogLevel(LOG_ERROR);
 
-    InitWindow(width, height, title);
+    InitWindow(CHIP8_DISPLAY_WIDTH * scale, CHIP8_DISPLAY_HEIGHT * scale, title);
     SetExitKey(KEY_ESCAPE);
 
     memset(gui->buffer, 0, sizeof(uint8_t) * CHIP8_DISPLAY_WIDTH * CHIP8_DISPLAY_HEIGHT * 3);
@@ -52,10 +65,12 @@ void gui_init(gui_t* gui, const char* title, int width, int height) {
     gui->dest = (Rectangle){
         .x = 0,
         .y = 0,
-        .width = width,
-        .height = height,
+        .width = CHIP8_DISPLAY_WIDTH * scale,
+        .height = CHIP8_DISPLAY_HEIGHT * scale,
     };
 
+    gui->scale = scale;
+    gui->show_grid = show_grid;
     gui->running = TRUE;
 }
 
@@ -64,8 +79,6 @@ void gui_quit() {
 }
 
 void gui_poll_events(gui_t* gui, uint16_t* keys_state) {
-    gui_render(gui);
-
     gui->running = !WindowShouldClose();
 
     for (size_t i = 0; i < 16; i++) {
@@ -99,5 +112,8 @@ void gui_render(gui_t* gui) {
     BeginDrawing();
     ClearBackground(WHITE);
     DrawTexturePro(gui->texture, gui->source, gui->dest, (Vector2) { 0, 0 }, 0.0f, WHITE);
+    if (gui->show_grid) {
+        priv_draw_grid(gui);
+    }
     EndDrawing();
 }

@@ -95,6 +95,7 @@ void parse_args(int argc, char* argv [], args_t* args) {
     }
 
     args->scale = WIN_DEFAULT_SCALE;
+    args->show_grid = FALSE;
     args->rom_path = argv[1];
 
     while ((opt = getopt_long(argc, argv, "hCGDs:g", long_options, NULL)) != -1) {
