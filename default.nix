@@ -4,6 +4,8 @@
 
 pkgs.mkShell {
   buildInputs = [ 
+    pkgs.gnumake
+    pkgs.gcc
     pkgs.raylib
   ];
 }
