@@ -364,8 +364,7 @@ static void priv_update_chip8(chip8_t* chip8) {
             cpu->PC = addr + cpu->V[0x0];
             break;
         case 0xC:                                                            /* RND Vx, byte */
-            uint8_t r = rand() % 0x100;
-            cpu->V[X] = r & kk;
+            cpu->V[X] = (rand() % 0x100) & kk;
             break;
         case 0xD:                                                            /* see priv_DXYn() */
             priv_DXYn(chip8, X, Y, n);
