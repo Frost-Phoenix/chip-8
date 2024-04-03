@@ -220,7 +220,7 @@ static void priv_FXnn(chip8_t* chip8, uint8_t X, uint8_t nn) {
             cpu->V[X] = cpu->DT;
             break;
         case 0x0A:                                                              /* LD Vx, K */
-            for (size_t i = 0; i < 0xF; i++) {
+            for (size_t i = 0; i <= 0xF; i++) {
                 if (!BIT_CHECK(chip8->keys_current_state, i) && BIT_CHECK(chip8->keys_last_state, i)) {
                     cpu->V[X] = i;
                     return;
