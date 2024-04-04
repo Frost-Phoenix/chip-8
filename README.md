@@ -68,20 +68,20 @@ Description:
   Run the CHIP-8 emulator with the specified ROM file.
 
 Required Argument:
-  <rom_path>                       Path to the ROM file.
+  <rom_path>              Path to the ROM file.
 
 Options:
-  -C, --CLI                           Run in CLI mode.
-  -G, --GUI                           Run in GUI mode.
-  -D, --DEBUG                      Run in debug mode.
-  -i, --ips <amount>        Number of Chip-8 instructions per seconds (default 900).
+  -C, --CLI               Run in CLI mode.
+  -G, --GUI               Run in GUI mode.
+  -D, --DEBUG             Run in debug mode.
+  -i, --ips <amount>      Number of Chip-8 instructions per seconds (default 900).
 
   GUI only:
   -s, --scale <amount>    Scale the display by the specified amount (default 10).
-  -g, --grid                         Show grid on the display.
+  -g, --grid              Show grid on the display.
 
 Miscellaneous:
-  -h, --help                         Display this help message and exit.
+  -h, --help              Display this help message and exit.
 ```
 
 ### Inputs
