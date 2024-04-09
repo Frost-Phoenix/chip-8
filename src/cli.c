@@ -162,28 +162,28 @@ void cli_print_memory(const chip8_t* chip8) {
 
 void cli_print_display(const uint8_t* display) {
     MOVE_CURSOR(0, 0);
+    RESET_FORMATING();
+
     PRINT_BOLD("╔═════════════════════════════╗Chip-8╔═════════════════════════════╗\n");
     for (size_t r = 0; r < CHIP8_DISPLAY_HEIGHT; r += 2) {
         printf("║ ");
         for (size_t c = 0; c < CHIP8_DISPLAY_WIDTH; c++) {
-            SET_BG_COLOR(BLACK_CLI);
-            SET_TEXT_COLOR(BLACK_CLI);
+            int upper = r * CHIP8_DISPLAY_WIDTH + c;
+            int lower = (r + 1) * CHIP8_DISPLAY_WIDTH + c;
 
-            if (display[r * CHIP8_DISPLAY_WIDTH + c] == 1) {
-                SET_BG_COLOR(WHITE_CLI);
+            if (display[upper] == 1 && display[lower] == 1) {
+                printf("█");
+            } else if (display[upper] == 1) {
+                printf("▀");
+            } else if (display[lower] == 1) {
+                printf("▄");
+            } else {
+                printf(" ");
             }
-            if (display[(r + 1) * CHIP8_DISPLAY_WIDTH + c] == 1) {
-                SET_TEXT_COLOR(WHITE_CLI);
-            }
-
-            printf("▄");
         }
-        RESET_FORMATING();
         printf(" ║\n");
     }
     printf("╚══════════════════════════════════════════════════════════════════╝\n");
-
-    RESET_FORMATING();
 }
 
 void cli_print_debug_info(chip8_t* chip8) {
