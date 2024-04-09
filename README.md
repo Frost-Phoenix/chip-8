@@ -113,15 +113,15 @@ Note that some games wont work properly in CLI mode because of the lack of keyup
 ## Screenshots
 
 <p align="center">
-   <img src="./.github/assets/breakout.png" width="640" /> <br>
+   <img src="./.github/assets/breakout.png" /> <br>
    <em>GUI Breakout with grid</em>
 </p>
 <p align="center">
-   <img src="./.github/assets/teris.png" width="640" /> <br>
+   <img src="./.github/assets/teris.png" /> <br>
    <em>GUI Tetris</em>
 </p>
 <p align="center">
-   <img src="./.github/assets/RPS_CLI.png" width="685" /> <br>
+   <img src="./.github/assets/RPS_CLI.png" /> <br>
    <em>CLI Rock paper scissors (RPS.ch8)</em>
 </p>
 
